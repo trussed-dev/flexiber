@@ -5,8 +5,6 @@ use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Re
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Tag(u8);
 
-pub(crate) const MEANINGLESS_TAG: Tag = Tag(42);
-
 impl TryFrom<u8> for Tag {
     type Error = Error;
     fn try_from(tag_number: u8) -> Result<Self> {
@@ -41,7 +39,7 @@ impl Decodable<'_> for Tag {
 }
 
 impl Encodable for Tag {
-    fn encoded_len(&self) -> Result<Length> {
+    fn encoded_length(&self) -> Result<Length> {
         Ok(1u8.into())
     }
 

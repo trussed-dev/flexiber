@@ -143,7 +143,7 @@ pub enum ErrorKind {
     Truncated,
 
     /// Encoded message is shorter than the expected length
-    /// (i.e. an `Encodable` impl on a particular type has a buggy `encoded_len`)
+    /// (i.e. an `Encodable` impl on a particular type has a buggy `encoded_length`)
     Underlength {
         /// Expected length
         expected: Length,

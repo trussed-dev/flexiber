@@ -40,8 +40,8 @@ impl Decodable<'_> for Header {
 }
 
 impl Encodable for Header {
-    fn encoded_len(&self) -> Result<Length> {
-        self.tag.encoded_len()? + self.length.encoded_len()?
+    fn encoded_length(&self) -> Result<Length> {
+        self.tag.encoded_length()? + self.length.encoded_length()?
     }
 
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {

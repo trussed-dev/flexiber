@@ -35,18 +35,18 @@ mod encoder;
 mod error;
 mod header;
 mod length;
-mod nested;
+mod slice;
 mod tag;
-mod tagged_slice;
+mod tagged;
 mod traits;
 
-pub use tagged_slice::TaggedSlice;
 pub use decoder::Decoder;
 pub use encoder::Encoder;
 pub use error::{Error, ErrorKind, Result};
-pub(crate) use header::Header;
+// pub(crate) use header::Header;
 pub use length::Length;
-pub use nested::Nested;
+pub use slice::Slice;
 pub use tag::Tag;
-pub use traits::{Decodable, Encodable, Tagged};
+pub use tagged::{TaggedSlice, TaggedValue};
+pub use traits::{Decodable, Encodable, Taggable};
 

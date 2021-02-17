@@ -1,5 +1,5 @@
-use core::convert::TryInto;
-use crate::{Encodable, ErrorKind, Header, Length, nested, Result, Tag};
+use core::convert::{TryFrom, TryInto};
+use crate::{Encodable, ErrorKind, header::Header, Length, Result, Tag};
 
 /// SIMPLE-TLV encoder.
 #[derive(Debug)]
@@ -59,7 +59,7 @@ impl<'a> Encoder<'a> {
 
     /// Encode a collection of values which impl the [`Encodable`] trait under a given tag.
     pub fn nested(&mut self, tag: Tag, encodables: &[&dyn Encodable]) -> Result<()> {
-        let expected_len = nested::encoded_len_inner(encodables)?;
+        let expected_len = Length::try_from(encodables)?;
         Header::new(tag, expected_len).and_then(|header| header.encode(self))?;
 
         let mut nested_encoder = Encoder::new(self.reserve(expected_len)?);

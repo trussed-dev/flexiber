@@ -2,7 +2,7 @@
 //! Trait definitions
 
 use core::convert::TryFrom;
-use crate::{Decoder, Encoder, Error, Header, Length, nested, Result, Tag, TaggedSlice};
+use crate::{Decoder, Encoder, Error, header::Header, Length, Result, Tag, TaggedSlice, TaggedValue};
 
 #[cfg(feature = "alloc")]
 use {
@@ -17,7 +17,9 @@ use {
     crate::{Error, ErrorKind},
 };
 
-/// Decoding trait.
+/// Decoding trait:
+///
+/// Decode out of decoder, which essentially is a slice of bytes.
 pub trait Decodable<'a>: Sized {
     /// Attempt to decode this message using the provided decoder.
     fn decode(decoder: &mut Decoder<'a>) -> Result<Self>;
@@ -41,10 +43,14 @@ where
     }
 }
 
-/// Encoding trait.
+/// Encoding trait
+///
+/// Encode into encoder, which essentially is a mutable slice of bytes.
+///
+/// Additionally, the encoded length needs to be known without actually encoding.
 pub trait Encodable {
     /// Compute the length of this value in bytes when encoded as SIMPLE-TLV
-    fn encoded_len(&self) -> Result<Length>;
+    fn encoded_length(&self) -> Result<Length>;
 
     /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()>;
@@ -62,7 +68,7 @@ pub trait Encodable {
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn encode_to_vec(&self, buf: &mut Vec<u8>) -> Result<Length> {
-        let expected_len = self.encoded_len()?.to_usize();
+        let expected_len = self.encoded_length()?.to_usize();
         let current_len = buf.len();
         buf.reserve(expected_len);
         buf.extend(iter::repeat(0).take(expected_len));
@@ -98,7 +104,7 @@ pub trait Encodable {
     #[cfg(feature = "heapless")]
     #[cfg_attr(docsrs, doc(cfg(feature = "heapless")))]
     fn encode_to_heapless_vec<N: heapless::ArrayLength<u8>>(&self, buf: &mut heapless::Vec<u8, N>) -> Result<Length> {
-        let expected_len = self.encoded_len()?.to_usize();
+        let expected_len = self.encoded_length()?.to_usize();
         let current_len = buf.len();
         // TODO(nickray): add a specific error for "Overcapacity" conditional on heapless feature?
         buf.resize_default(current_len + expected_len).map_err(|_| Error::from(ErrorKind::Overlength))?;
@@ -128,49 +134,14 @@ pub trait Encodable {
     }
 }
 
-pub trait Taggable: Sized + Encodable {
-    fn tagged(&self, tag: Tag) -> Tagged<'_, Self> {
-        Tagged { tag, encodable: self }
+/// Types that have can be tagged.
+pub trait Taggable: Sized {
+    fn tagged(&self, tag: Tag) -> TaggedValue<&Self> {
+        TaggedValue::new(tag, self)
     }
 }
 
-impl<X> Taggable for X where X: Sized + Encodable {}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-// pub struct Tagged<'a, E: Encodable> {
-pub struct Tagged<'a, E> {
-    tag: Tag,
-    encodable: &'a E,
-}
-
-impl<'a, E> Tagged<'a, E>
-where
-    E: Encodable
-{
-    pub fn from(encodable: &'a E, tag: Tag) -> Self {
-        Tagged { tag, encodable }
-    }
-
-    fn header(&self) -> Result<Header> {
-        Ok(Header {
-            tag: self.tag,
-            length: self.encodable.encoded_len()?,
-        })
-    }
-}
-
-impl<'a, E> Encodable for Tagged<'a, E>
-where
-    E: Encodable
-{
-    fn encoded_len(&self) -> Result<Length> {
-        self.header()?.encoded_len()? + self.encodable.encoded_len()?
-    }
-    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-        self.header()?.encode(encoder)?;
-        encoder.encode(self.encodable)
-    }
-}
+impl<X> Taggable for X where X: Sized {}
 
 // /// Types with an associated SIMPLE-TLV [`Tag`].
 // pub trait Tagged {
@@ -204,8 +175,9 @@ impl<'a, M> Encodable for M
 where
     M: Message<'a>,
 {
-    fn encoded_len(&self) -> Result<Length> {
-        self.fields(nested::encoded_len)
+    fn encoded_length(&self) -> Result<Length> {
+        let value_length = self.fields(|encodables| Length::try_from(encodables))?;
+        Header::new(Self::tag(), value_length)?.encoded_length() + value_length
     }
 
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
@@ -213,22 +185,15 @@ where
     }
 }
 
-//impl<'a, M> Tagged for M
-//where
-//    M: Message<'a>,
-//{
-//    const TAG: Tag = Tag::Sequence;
-//}
-
 #[cfg(test)]
 mod tests {
 
     use core::convert::{TryFrom, TryInto};
-    use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, TaggedSlice};
-    use super::{Message, Taggable};
+    use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, Taggable, TaggedSlice};
+    use super::Message;
 
     impl Encodable for [u8; 2] {
-        fn encoded_len(&self) -> Result<Length> {
+        fn encoded_length(&self) -> Result<Length> {
             Ok(2u8.into())
         }
 
@@ -239,7 +204,7 @@ mod tests {
     }
 
     impl Encodable for [u8; 3] {
-        fn encoded_len(&self) -> Result<Length> {
+        fn encoded_length(&self) -> Result<Length> {
             Ok(3u8.into())
         }
 
@@ -250,7 +215,7 @@ mod tests {
     }
 
     impl Encodable for [u8; 4] {
-        fn encoded_len(&self) -> Result<Length> {
+        fn encoded_length(&self) -> Result<Length> {
             Ok(4u8.into())
         }
 
@@ -305,7 +270,7 @@ mod tests {
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<S> {
             tagged_slice.tag().assert_eq(Tag::try_from(0xAA).unwrap())?;
-            tagged_slice.nested(|decoder| {
+            tagged_slice.decode_nested(|decoder| {
                 let x = decoder.decode_tag(Tag::try_from(0x11).unwrap())?;
                 let y = decoder.decode_tag(Tag::try_from(0x22).unwrap())?;
                 let z = decoder.decode_tag(Tag::try_from(0x33).unwrap())?;
@@ -368,7 +333,7 @@ mod tests {
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
             tagged_slice.tag().assert_eq(Tag::try_from(0xBB).unwrap())?;
-            tagged_slice.nested(|decoder| {
+            tagged_slice.decode_nested(|decoder| {
                 let s = decoder.decode_tag(Tag::try_from(0x01).unwrap())?;
                 let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
 
@@ -434,7 +399,7 @@ mod tests {
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
             tagged_slice.tag().assert_eq(Tag::try_from(0xCC).unwrap())?;
-            tagged_slice.nested(|decoder| {
+            tagged_slice.decode_nested(|decoder| {
                 let s = decoder.decode()?;
                 let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
 

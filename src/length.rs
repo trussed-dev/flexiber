@@ -32,6 +32,18 @@ impl Length {
     }
 }
 
+/// Calculate the sum of the encoded lengths of the encodables.
+impl<'a> TryFrom<&'a [&'a dyn Encodable]> for Length {
+    type Error = Error;
+    fn try_from(encodables: &[&dyn Encodable]) -> Result<Length> {
+        encodables
+            .iter()
+            .fold(Ok(Length::zero()), |sum, encodable| {
+                sum + encodable.encoded_length()?
+            })
+    }
+}
+
 impl Add for Length {
     type Output = Result<Self>;
 
@@ -122,7 +134,7 @@ impl Decodable<'_> for Length {
 }
 
 impl Encodable for Length {
-    fn encoded_len(&self) -> Result<Length> {
+    fn encoded_length(&self) -> Result<Length> {
         match self.0 {
             0..=0xFE => Ok(Length(1)),
             _ => Ok(Length(3)),
