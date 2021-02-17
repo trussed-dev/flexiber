@@ -179,6 +179,13 @@ where
     TaggedContainer: Tagged + Container
 {
     fn encoded_length(&self) -> Result<Length> {
+        #[allow(clippy::redundant_closure)]
+        // if we do as clippy tells, we get:
+        // 183 |         let value_length = self.fields(Length::try_from)?;
+        //     |                                 ^^^^^^ one type is more general than the other
+        //     |
+        //     = note: expected type `FnOnce<(&[&dyn Encodable],)>`
+        //                found type `FnOnce<(&[&dyn Encodable],)>`
         let value_length = self.fields(|encodables| Length::try_from(encodables))?;
         Header::new(Self::tag(), value_length)?.encoded_length() + value_length
     }
@@ -268,8 +275,8 @@ impl_array!(
 #[cfg(test)]
 mod tests {
 
-    use core::convert::{TryFrom, TryInto};
-    use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, TaggedSlice};
+    use core::convert::TryFrom;
+    use crate::{Decodable, Encodable, Error, Result, Tag, TaggedSlice};
     use super::{Taggable, Tagged, Container};
 
     // The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields

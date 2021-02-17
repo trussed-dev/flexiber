@@ -88,7 +88,7 @@ impl FieldAttrs {
     }
 }
 
-fn extract_tag(name: &Ident, attrs: &Vec<Attribute>) -> u8 {
+fn extract_tag(name: &Ident, attrs: &[Attribute]) -> u8 {
     let mut tag = None;
 
     for attr in attrs {

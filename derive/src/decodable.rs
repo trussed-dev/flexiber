@@ -15,7 +15,7 @@ pub(crate) struct DeriveDecodableStruct {
 }
 
 impl DeriveDecodableStruct {
-    pub fn derive(s: Structure<'_>, data: &DataStruct, name: &Ident, attrs: &Vec<Attribute>) -> TokenStream {
+    pub fn derive(s: Structure<'_>, data: &DataStruct, name: &Ident, attrs: &[Attribute]) -> TokenStream {
 
         let tag = extract_tag(name, attrs);
 

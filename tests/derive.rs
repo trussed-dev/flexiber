@@ -5,13 +5,13 @@
 use simple_tlv::{Decodable, Encodable};
 
 #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
-#[tlv(tag = "0xAA")]
+#[tlv(tag = "AA")]
 struct S {
-    #[tlv(tag = "0x11")]
+    #[tlv(tag = "11")]
     x: [u8; 2],
-    #[tlv(tag = "0x22")]
+    #[tlv(tag = "22")]
     y: [u8; 3],
-    #[tlv(tag = "0x33")]
+    #[tlv(tag = "33")]
     z: [u8; 4],
 }
 

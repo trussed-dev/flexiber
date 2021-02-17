@@ -74,6 +74,7 @@ impl<'a> TaggedSlice<'a> {
     }
 
     /// Get the SIMPLE-TLV [`Header`] for this [`TaggedSlice`] value
+    #[allow(clippy::unnecessary_wraps)]
     fn header(&self) -> Result<Header> {
         Ok(Header {
             tag: self.tag(),
