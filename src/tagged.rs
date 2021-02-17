@@ -3,14 +3,14 @@
 
 use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag};
 
-/// SIMPLE-TLV data object
+/// SIMPLE-TLV data object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TaggedValue<V> {
     tag: Tag,
     value: V,
 }
 
-/// Raw SIMPLE-TLV data object: TaggedValue with Slice as value.
+/// Raw SIMPLE-TLV data object `TaggedValue<Slice<'_>>`.
 pub type TaggedSlice<'a> = TaggedValue<Slice<'a>>;
 
 impl<V> TaggedValue<V>
@@ -23,7 +23,6 @@ impl<V> TaggedValue<V>
         self.tag
     }
 }
-
 
 impl<'a, E> TaggedValue<&'a E>
 where

@@ -8,7 +8,7 @@ use core::{convert::Infallible, fmt};
 /// Result type.
 pub type Result<T> = core::result::Result<T, Error>;
 
-/// Error type
+/// Error type.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Error {
     /// Kind of error

@@ -20,6 +20,10 @@
 //! - not requiring references to ASN.1 (e.g., since SIMPLE-TLV does not have any)
 //! - not requiring allocations or memmoves (like ring, derp, x509:der)
 //! - adding a type layer on top of SIMPLE-TLV's byte slice values
+//!
+//! The core idea taken from `der` is to have `Encodable` require an `encoded_length` method.
+//! By calling this recursively in a first pass, allocations required in other approaches are
+//! avoided.
 
 #![no_std]
 #![forbid(unsafe_code)]

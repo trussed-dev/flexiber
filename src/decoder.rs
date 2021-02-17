@@ -126,6 +126,18 @@ impl<'a> From<&'a [u8]> for Decoder<'a> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use core::convert::TryFrom;
+    use crate::{Decodable, Tag, TaggedSlice};
+
+    #[test]
+    fn zero_length() {
+        let buf: &[u8] = &[0x2A, 0x00];
+        let ts = TaggedSlice::from_bytes(buf).unwrap();
+        assert_eq!(ts, TaggedSlice::from(Tag::try_from(42).unwrap(), &[]).unwrap());
+    }
+}
 // #[cfg(test)]
 // mod tests {
 //     use super::Decoder;

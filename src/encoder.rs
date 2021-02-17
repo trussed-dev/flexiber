@@ -140,8 +140,19 @@ impl<'a> Encoder<'a> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
+#[cfg(test)]
+mod tests {
+    use core::convert::TryFrom;
+    use crate::{Encodable, Tag, TaggedSlice};
+
+    #[test]
+    fn zero_length() {
+        let tv = TaggedSlice::from(Tag::try_from(42).unwrap(), &[]).unwrap();
+        let mut buf = [0u8; 4];
+        assert_eq!(tv.encode_to_slice(&mut buf).unwrap(), &[0x2A, 0x00]);
+    }
+}
+
 //     use super::Encoder;
 //     use crate::{Encodable, ErrorKind, Length};
 

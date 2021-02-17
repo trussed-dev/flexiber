@@ -17,7 +17,7 @@ use {
     crate::{Error, ErrorKind},
 };
 
-/// Decoding trait:
+/// Decoding trait.
 ///
 /// Decode out of decoder, which essentially is a slice of bytes.
 ///
@@ -45,7 +45,7 @@ where
     }
 }
 
-/// Encoding trait
+/// Encoding trait.
 ///
 /// Encode into encoder, which essentially is a mutable slice of bytes.
 ///
@@ -152,12 +152,16 @@ impl<X> Taggable for X where X: Sized {}
 // }
 
 /// Types with an associated SIMPLE-TLV [`Tag`].
+///
+/// A tagged type implementing `Container` has a blanked implementation of `Encodable`.
 pub trait Tagged {
     /// The tag
     fn tag() -> Tag;
 }
 
 /// Multiple encodables in a container.
+///
+/// A container implementing `Tagged` has a blanked implementation of `Encodable`.
 pub trait Container {
     /// Call the provided function with a slice of [`Encodable`] trait objects
     /// representing the fields of this message.
@@ -170,9 +174,9 @@ pub trait Container {
         F: FnOnce(&[&dyn Encodable]) -> Result<T>;
 }
 
-impl<TC> Encodable for TC
+impl<TaggedContainer> Encodable for TaggedContainer
 where
-    TC: Tagged + Container,
+    TaggedContainer: Tagged + Container
 {
     fn encoded_length(&self) -> Result<Length> {
         let value_length = self.fields(|encodables| Length::try_from(encodables))?;
