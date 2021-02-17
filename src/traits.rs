@@ -299,6 +299,7 @@ mod tests {
         z: [u8; 4],
     }
 
+    // this is what needs to be done to get `Decodable`
     impl<'a> TryFrom<TaggedSlice<'a>> for S {
         type Error = Error;
 
@@ -314,6 +315,7 @@ mod tests {
         }
     }
 
+    // this is what needs to be done to get `Encodable`
     impl<'a> Message<'a> for S {
         fn tag() -> Tag {
             Tag::try_from(0xAA).unwrap()
@@ -350,7 +352,138 @@ mod tests {
         let s2 = S::from_bytes(encoded).unwrap();
 
         assert_eq!(s, s2);
+    }
+
+    // tag 0xBB
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct T {
+        // tag 0x01
+        s: S,
+        // tag 0x02
+        t: [u8; 3],
+    }
+
+    impl<'a> TryFrom<TaggedSlice<'a>> for T {
+        type Error = Error;
+
+        fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
+            tagged_slice.tag().assert_eq(Tag::try_from(0xBB).unwrap())?;
+            tagged_slice.nested(|decoder| {
+                let s = decoder.decode_tag(Tag::try_from(0x01).unwrap())?;
+                let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
+
+                Ok(Self { s, t })
+            })
+        }
+    }
+
+    impl<'a> Message<'a> for T {
+        fn tag() -> Tag {
+            Tag::try_from(0xBB).unwrap()
+        }
+
+        fn fields<F, Z>(&self, field_encoder: F) -> Result<Z>
+        where
+            F: FnOnce(&[&dyn Encodable]) -> Result<Z>,
+        {
+            field_encoder(&[
+                &self.s.tagged(Tag::try_from(0x1).unwrap()),
+                &self.t.tagged(Tag::try_from(0x2).unwrap()),
+            ])
+        }
+    }
 
 
+    #[test]
+    fn nesty() {
+        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+        let t = T { s, t: [0xA, 0xB, 0xC] };
+
+        let mut buf = [0u8; 1024];
+
+        let encoded = t.encode_to_slice(&mut buf).unwrap();
+
+        assert_eq!(encoded,
+            &[0xBB, 24,
+                0x1, 17,
+                    0xAA, 15,
+                        0x11, 2, 1, 2,
+                        0x22, 3, 3, 4, 5,
+                        0x33, 4, 6, 7, 8, 9,
+                0x2, 3,
+                   0xA, 0xB, 0xC
+            ],
+        );
+
+        let t2 = T::from_bytes(encoded).unwrap();
+
+        assert_eq!(t, t2);
+    }
+
+    // tag 0xCC
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct T2 {
+        // no tag
+        s: S,
+        // tag 0x02
+        t: [u8; 3],
+    }
+
+    impl<'a> TryFrom<TaggedSlice<'a>> for T2 {
+        type Error = Error;
+
+        fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
+            tagged_slice.tag().assert_eq(Tag::try_from(0xCC).unwrap())?;
+            tagged_slice.nested(|decoder| {
+                let s = decoder.decode()?;
+                let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
+
+                Ok(Self { s, t })
+            })
+        }
+    }
+
+    impl<'a> Message<'a> for T2 {
+        fn tag() -> Tag {
+            Tag::try_from(0xCC).unwrap()
+        }
+
+        fn fields<F, Z>(&self, field_encoder: F) -> Result<Z>
+        where
+            F: FnOnce(&[&dyn Encodable]) -> Result<Z>,
+        {
+            field_encoder(&[
+                &self.s,
+                &self.t.tagged(Tag::try_from(0x2).unwrap()),
+            ])
+        }
+    }
+
+
+    #[test]
+    fn nesty2() {
+        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+        let t = T2 { s, t: [0xA, 0xB, 0xC] };
+
+        let mut buf = [0u8; 1024];
+
+        let encoded = t.encode_to_slice(&mut buf).unwrap();
+
+        assert_eq!(encoded,
+            // &[0xBB, 24,
+            &[0xCC, 22,
+                // 0x1, 17,
+                    0xAA, 15,
+                        0x11, 2, 1, 2,
+                        0x22, 3, 3, 4, 5,
+                        0x33, 4, 6, 7, 8, 9,
+                0x2, 3,
+                   0xA, 0xB, 0xC
+            ],
+        );
+
+        let t2 = T2::from_bytes(encoded).unwrap();
+
+        assert_eq!(t, t2);
     }
 }
