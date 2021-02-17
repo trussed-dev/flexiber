@@ -14,7 +14,7 @@ use {
 #[cfg(feature = "heapless")]
 use {
     core::convert::TryInto,
-    crate::{Error, ErrorKind},
+    crate::ErrorKind,
 };
 
 /// Decoding trait.
@@ -101,10 +101,16 @@ pub trait Encodable {
         Ok(buf)
     }
 
+}
+
+#[cfg(feature = "heapless")]
+#[cfg_attr(docsrs, doc(cfg(feature = "heapless")))]
+/// The equivalent of the `encode_to_vec` and `to_vec` methods.
+///
+/// Separate trait because the generic parameter `N` would make `Encodable` not object safe.
+pub trait EncodableHeapless: Encodable {
     /// Encode this message as SIMPLE-TLV, appending it to the provided
     /// heapless byte vector.
-    #[cfg(feature = "heapless")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "heapless")))]
     fn encode_to_heapless_vec<N: heapless::ArrayLength<u8>>(&self, buf: &mut heapless::Vec<u8, N>) -> Result<Length> {
         let expected_len = self.encoded_length()?.to_usize();
         let current_len = buf.len();
@@ -127,8 +133,6 @@ pub trait Encodable {
     }
 
     /// Serialize this message as a byte vector.
-    #[cfg(feature = "heapless")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "heapless")))]
     fn to_heapless_vec<N: heapless::ArrayLength<u8>>(&self) -> Result<heapless::Vec<u8, N>> {
         let mut buf = heapless::Vec::new();
         self.encode_to_heapless_vec(&mut buf)?;

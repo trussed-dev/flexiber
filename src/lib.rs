@@ -56,4 +56,6 @@ pub use slice::Slice;
 pub use tag::Tag;
 pub use tagged::{TaggedSlice, TaggedValue};
 pub use traits::{Container, Decodable, Encodable, Tagged};
+#[cfg(feature = "heapless")]
+pub use traits::EncodableHeapless;
 
