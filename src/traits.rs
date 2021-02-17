@@ -20,6 +20,8 @@ use {
 /// Decoding trait:
 ///
 /// Decode out of decoder, which essentially is a slice of bytes.
+///
+/// One way to implement this trait is to implement `TryFrom<TaggedSlice<'_>, Error = Error>`.
 pub trait Decodable<'a>: Sized {
     /// Attempt to decode this message using the provided decoder.
     fn decode(decoder: &mut Decoder<'a>) -> Result<Self>;
@@ -134,8 +136,8 @@ pub trait Encodable {
     }
 }
 
-/// Types that have can be tagged.
-pub trait Taggable: Sized {
+/// Types that can be tagged.
+pub(crate) trait Taggable: Sized {
     fn tagged(&self, tag: Tag) -> TaggedValue<&Self> {
         TaggedValue::new(tag, self)
     }
@@ -149,17 +151,14 @@ impl<X> Taggable for X where X: Sized {}
 //     const TAG: Tag;
 // }
 
-/// Messages encoded nested SIMPLE-TLV.
-///
-/// This wraps up a common pattern for SIMPLE-TLV encoding.
-/// - implement `TryFrom<TaggedSlice<'a>, Error = Error>` to get a default `Decodable` implementation
-/// - implement `Message` to get a default `Encodable` implementation
-///
-/// Types which impl this trait receive blanket impls for the [`Encodable`] trait.
-pub trait Message<'a>: Decodable<'a> {
-    /// The tag for the message itself
+/// Types with an associated SIMPLE-TLV [`Tag`].
+pub trait Tagged {
+    /// The tag
     fn tag() -> Tag;
+}
 
+/// Multiple encodables in a container.
+pub trait Container {
     /// Call the provided function with a slice of [`Encodable`] trait objects
     /// representing the fields of this message.
     ///
@@ -171,9 +170,9 @@ pub trait Message<'a>: Decodable<'a> {
         F: FnOnce(&[&dyn Encodable]) -> Result<T>;
 }
 
-impl<'a, M> Encodable for M
+impl<TC> Encodable for TC
 where
-    M: Message<'a>,
+    TC: Tagged + Container,
 {
     fn encoded_length(&self) -> Result<Length> {
         let value_length = self.fields(|encodables| Length::try_from(encodables))?;
@@ -181,16 +180,61 @@ where
     }
 
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-        self.fields(|fields| encoder.nested(Self::tag(), fields))
+        self.fields(|fields| encoder.encode_tagged_collection(Self::tag(), fields))
     }
 }
+
+///// Multiple encodables, nested under a SIMPLE-TLV tag.
+/////
+///// This wraps up a common pattern for SIMPLE-TLV encoding.
+///// Implementations obtain a blanket `Encodable` implementation
+//pub trait TaggedContainer: Container + Tagged {}
+
+//pub trait Untagged {}
+
+///// Multiple encodables, side-by-side without a SIMPLE-TLV tag.
+/////
+///// This wraps up a common pattern for SIMPLE-TLV encoding.
+///// Implementations obtain a blanket `Encodable` implementation
+//pub trait UntaggedContainer: Container + Untagged {}
+
+// impl<UC> Encodable for UC
+// where
+//     UC: Untagged + Container,
+// {
+//     fn encoded_length(&self) -> Result<Length> {
+//         todo!();
+//         // let value_length = self.fields(|encodables| Length::try_from(encodables))?;
+//         // Header::new(Self::tag(), value_length)?.encoded_length() + value_length
+//     }
+
+//     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+//         todo!();
+//         // self.fields(|fields| encoder.nested(Self::tag(), fields))
+//     }
+// }
+
+// pub type UntaggedContainer<'a> = &'a [&'a dyn Encodable];
+
+// impl<'a> Encodable for UntaggedContainer<'a> {
+//     fn encoded_length(&self) -> Result<Length> {
+//        Length::try_from(*self)
+//     }
+
+//     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+//         for encodable in self.iter() {
+//             encodable.encode(encoder)?;
+//         }
+//         Ok(())
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
 
     use core::convert::{TryFrom, TryInto};
-    use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, Taggable, TaggedSlice};
-    use super::Message;
+    use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, TaggedSlice};
+    use super::{Taggable, Tagged, Container};
 
     impl Encodable for [u8; 2] {
         fn encoded_length(&self) -> Result<Length> {
@@ -271,9 +315,9 @@ mod tests {
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<S> {
             tagged_slice.tag().assert_eq(Tag::try_from(0xAA).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
-                let x = decoder.decode_tag(Tag::try_from(0x11).unwrap())?;
-                let y = decoder.decode_tag(Tag::try_from(0x22).unwrap())?;
-                let z = decoder.decode_tag(Tag::try_from(0x33).unwrap())?;
+                let x = decoder.decode_tagged_value(Tag::try_from(0x11).unwrap())?;
+                let y = decoder.decode_tagged_value(Tag::try_from(0x22).unwrap())?;
+                let z = decoder.decode_tagged_value(Tag::try_from(0x33).unwrap())?;
 
                 Ok(Self { x, y, z })
             })
@@ -281,17 +325,21 @@ mod tests {
     }
 
     // this is what needs to be done to get `Encodable`
-    impl<'a> Message<'a> for S {
+    impl Tagged for S {
         fn tag() -> Tag {
             Tag::try_from(0xAA).unwrap()
         }
+    }
 
+    impl Container for S {
         fn fields<F, T>(&self, field_encoder: F) -> Result<T>
         where
             F: FnOnce(&[&dyn Encodable]) -> Result<T>,
         {
+            // both approaches equivalent
             field_encoder(&[
-                &self.x.tagged(Tag::try_from(0x11).unwrap()),
+                &(Tag::try_from(0x11).unwrap().with_value(&self.x)),
+                // &self.x.tagged(Tag::try_from(0x11).unwrap()),
                 &self.y.tagged(Tag::try_from(0x22).unwrap()),
                 &self.z.tagged(Tag::try_from(0x33).unwrap()),
 
@@ -334,19 +382,21 @@ mod tests {
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
             tagged_slice.tag().assert_eq(Tag::try_from(0xBB).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
-                let s = decoder.decode_tag(Tag::try_from(0x01).unwrap())?;
-                let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
+                let s = decoder.decode_tagged_value(Tag::try_from(0x01).unwrap())?;
+                let t = decoder.decode_tagged_value(Tag::try_from(0x02).unwrap())?;
 
                 Ok(Self { s, t })
             })
         }
     }
 
-    impl<'a> Message<'a> for T {
+    impl Tagged for T {
         fn tag() -> Tag {
             Tag::try_from(0xBB).unwrap()
         }
+    }
 
+    impl Container for T {
         fn fields<F, Z>(&self, field_encoder: F) -> Result<Z>
         where
             F: FnOnce(&[&dyn Encodable]) -> Result<Z>,
@@ -401,18 +451,20 @@ mod tests {
             tagged_slice.tag().assert_eq(Tag::try_from(0xCC).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
                 let s = decoder.decode()?;
-                let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
+                let t = decoder.decode_tagged_value(Tag::try_from(0x02).unwrap())?;
 
                 Ok(Self { s, t })
             })
         }
     }
 
-    impl<'a> Message<'a> for T2 {
+    impl Tagged for T2 {
         fn tag() -> Tag {
             Tag::try_from(0xCC).unwrap()
         }
+    }
 
+    impl Container for T2 {
         fn fields<F, Z>(&self, field_encoder: F) -> Result<Z>
         where
             F: FnOnce(&[&dyn Encodable]) -> Result<Z>,
@@ -451,4 +503,74 @@ mod tests {
 
         assert_eq!(t, t2);
     }
+
+    // no tag
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    struct T3 {
+        // no tag
+        s: S,
+        // tag 0x02
+        t: [u8; 3],
+    }
+
+    // impl<'a> TryFrom<TaggedSlice<'a>> for T2 {
+    //     type Error = Error;
+
+    //     fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
+    //         tagged_slice.tag().assert_eq(Tag::try_from(0xCC).unwrap())?;
+    //         tagged_slice.decode_nested(|decoder| {
+    //             let s = decoder.decode()?;
+    //             let t = decoder.decode_tag(Tag::try_from(0x02).unwrap())?;
+
+    //             Ok(Self { s, t })
+    //         })
+    //     }
+    // }
+
+    // impl TaggedContainer for T2 {
+    //     fn tag() -> Tag {
+    //         Tag::try_from(0xCC).unwrap()
+    //     }
+
+    //     fn fields<F, Z>(&self, field_encoder: F) -> Result<Z>
+    //     where
+    //         F: FnOnce(&[&dyn Encodable]) -> Result<Z>,
+    //     {
+    //         field_encoder(&[
+    //             &self.s,
+    //             &self.t.tagged(Tag::try_from(0x2).unwrap()),
+    //         ])
+    //     }
+    // }
+
+
+    // #[test]
+    // fn nesty3() {
+    //     let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+    //     let t = T3 { s, t: [0xA, 0xB, 0xC] };
+
+    //     let mut buf = [0u8; 1024];
+
+    //     // let encoded = (&[
+    //     //     &t.s,
+    //     //     &t.t.tagged(Tag::try_from(0x2).unwrap()),
+    //     // ]).encode_to_slice(&mut buf).unwrap();
+
+    //     assert_eq!(encoded,
+    //         // &[0xBB, 24,
+    //         &[0xCC, 22,
+    //             // 0x1, 17,
+    //                 0xAA, 15,
+    //                     0x11, 2, 1, 2,
+    //                     0x22, 3, 3, 4, 5,
+    //                     0x33, 4, 6, 7, 8, 9,
+    //             0x2, 3,
+    //                0xA, 0xB, 0xC
+    //         ],
+    //     );
+
+    //     let t2 = T2::from_bytes(encoded).unwrap();
+
+    //     assert_eq!(t, t2);
+    // }
 }

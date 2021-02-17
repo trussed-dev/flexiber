@@ -1,5 +1,5 @@
 use core::{convert::TryFrom, fmt};
-use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result};
+use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result, TaggedValue};
 
 /// The tag field consists of a single byte encoding a tag number from 1 to 254. The values '00' and 'FF' are invalid.
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -30,6 +30,13 @@ impl Tag {
             .into())
         }
     }
+
+    pub fn with_value<V>(self, value: V) -> TaggedValue<V> {
+        TaggedValue::new(self, value)
+    }
+    // fn tagged(&self, tag: Tag) -> TaggedValue<&Self> {
+    //     TaggedValue::new(tag, self)
+    // }
 }
 
 impl Decodable<'_> for Tag {

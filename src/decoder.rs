@@ -35,7 +35,8 @@ impl<'a> Decoder<'a> {
         })
     }
 
-    pub fn decode_tag<T: Decodable<'a>>(&mut self, tag: crate::Tag) -> Result<T> {
+    /// Decode a TaggedValue with tag checked to be as expected, returning the value
+    pub fn decode_tagged_value<V: Decodable<'a>>(&mut self, tag: crate::Tag) -> Result<V> {
         let tagged: crate::TaggedSlice = self.decode()?;
         tagged.tag().assert_eq(tag)?;
         Self::new(tagged.as_bytes()).decode()

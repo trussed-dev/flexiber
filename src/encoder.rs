@@ -58,7 +58,7 @@ impl<'a> Encoder<'a> {
     }
 
     /// Encode a collection of values which impl the [`Encodable`] trait under a given tag.
-    pub fn nested(&mut self, tag: Tag, encodables: &[&dyn Encodable]) -> Result<()> {
+    pub fn encode_tagged_collection(&mut self, tag: Tag, encodables: &[&dyn Encodable]) -> Result<()> {
         let expected_len = Length::try_from(encodables)?;
         Header::new(tag, expected_len).and_then(|header| header.encode(self))?;
 

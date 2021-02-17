@@ -8,10 +8,10 @@ use core::{convert::{TryFrom, TryInto}, fmt, ops::Add};
 /// By definition, in the range `0..=65535`
 ///
 /// The length field consists of one or three consecutive bytes.
-/// - If the first byte is not set to 'FF', then the length field consists of a single byte encoding a number from
-///   zero to 254 and denoted N.
-/// - If the first byte is set to 'FF', then the length field continues on the subsequent two bytes with any
-///   value encoding a number from zero to 65_535 and denoted N.
+/// - If the first byte is not `0xFF`, then the length field consists of a single byte encoding a number from
+///   zero to 254.
+/// - If the first byte is `0xFF`, then the length field consists of the subsequent two bytes interpreted as
+///   big-endian integer, with any value from zero to 65,535.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
 pub struct Length(u16);
 
@@ -21,12 +21,12 @@ impl Length {
         Length(0)
     }
 
-    /// Get the maximum length supported by this crate
+    /// Get the maximum length supported by SIMPLE-TLV: 65,535.
     pub const fn max() -> usize {
         u16::MAX as usize
     }
 
-    /// Convert length to `usize`
+    /// Convert length to `usize`.
     pub fn to_usize(self) -> usize {
         self.0.into()
     }

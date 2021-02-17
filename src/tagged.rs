@@ -1,5 +1,5 @@
 // //! Common handling for types backed by byte slices with enforcement of the
-// //! format-level length limitation of 65_535 bytes.
+// //! format-level length limitation of 65,535 bytes.
 
 use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag};
 
