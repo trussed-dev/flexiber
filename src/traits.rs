@@ -233,66 +233,69 @@ where
 //     }
 // }
 
+impl Encodable for [u8; 2] {
+    fn encoded_length(&self) -> Result<Length> {
+        Ok(2u8.into())
+    }
+
+    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+        encoder.bytes(self.as_ref())
+    }
+}
+
+impl Encodable for [u8; 3] {
+    fn encoded_length(&self) -> Result<Length> {
+        Ok(3u8.into())
+    }
+
+    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+        encoder.bytes(self.as_ref())
+    }
+}
+
+impl Encodable for [u8; 4] {
+    fn encoded_length(&self) -> Result<Length> {
+        Ok(4u8.into())
+    }
+
+    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+        encoder.bytes(self.as_ref())
+    }
+}
+
+impl Decodable<'_> for [u8; 2] {
+    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
+        use core::convert::TryInto;
+        let bytes: &[u8] = decoder.bytes(2u8)?;
+        Ok(bytes.try_into().unwrap())
+    }
+}
+
+impl Decodable<'_> for [u8; 3] {
+    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
+        use core::convert::TryInto;
+        let bytes: &[u8] = decoder.bytes(3u8)?;
+        Ok(bytes.try_into().unwrap())
+    }
+}
+
+impl Decodable<'_> for [u8; 4] {
+    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
+        use core::convert::TryInto;
+        let bytes: &[u8] = decoder.bytes(4u8)?;
+        Ok(bytes.try_into().unwrap())
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
     use core::convert::{TryFrom, TryInto};
     use crate::{Decodable, Decoder, Encodable, Encoder, Error, Length, Result, Tag, TaggedSlice};
     use super::{Taggable, Tagged, Container};
-
-    impl Encodable for [u8; 2] {
-        fn encoded_length(&self) -> Result<Length> {
-            Ok(2u8.into())
-        }
-
-        /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-        fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-            encoder.bytes(self.as_ref())
-        }
-    }
-
-    impl Encodable for [u8; 3] {
-        fn encoded_length(&self) -> Result<Length> {
-            Ok(3u8.into())
-        }
-
-        /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-        fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-            encoder.bytes(self.as_ref())
-        }
-    }
-
-    impl Encodable for [u8; 4] {
-        fn encoded_length(&self) -> Result<Length> {
-            Ok(4u8.into())
-        }
-
-        /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-        fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-            encoder.bytes(self.as_ref())
-        }
-    }
-
-    impl Decodable<'_> for [u8; 2] {
-        fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-            let bytes: &[u8] = decoder.bytes(2u8)?;
-            Ok(bytes.try_into().unwrap())
-        }
-    }
-
-    impl Decodable<'_> for [u8; 3] {
-        fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-            let bytes: &[u8] = decoder.bytes(3u8)?;
-            Ok(bytes.try_into().unwrap())
-        }
-    }
-
-    impl Decodable<'_> for [u8; 4] {
-        fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-            let bytes: &[u8] = decoder.bytes(4u8)?;
-            Ok(bytes.try_into().unwrap())
-        }
-    }
 
     // The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields
     // of a struct that are Decodable + Encodable. This means they can decode to/encode from

@@ -32,6 +32,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+#[cfg(feature = "derive")]
+pub use simple_tlv_derive::UntaggedCollection;
+
 #[cfg(feature = "std")]
 extern crate std;
 

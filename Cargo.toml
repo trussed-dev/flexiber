@@ -12,6 +12,8 @@ readme = "README.md"
 
 [dependencies]
 # der = "0.2.3"
+# simple-tlv_derive = { version = "0.1", optional = true, path = "derive" }
+simple-tlv_derive = { version = "0.1", optional = true, path = "derive" }
 
 [dependencies.heapless]
 version = "0.6.0"
@@ -20,4 +22,5 @@ optional = true
 [features]
 # default = ["heapless"]
 alloc = []
+derive = ["simple-tlv_derive"]
 std = ["alloc"]

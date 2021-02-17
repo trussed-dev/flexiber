@@ -1,0 +1,14 @@
+[package]
+name = "simple-tlv_derive"
+version = "0.1.0"
+authors = ["Nicolas Stalder <n@stalder.io>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = "1"
+synstructure = "0.12"
