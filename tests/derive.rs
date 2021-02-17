@@ -2,10 +2,9 @@
 
 #![cfg(feature = "derive")]
 
-use simple_tlv::{Decodable, Encodable, Encoder, UntaggedCollection};
-// use hex_literal::hex;
+use simple_tlv::{Decodable, Encodable};
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, UntaggedCollection)]
+#[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
 #[tlv(tag = "0xAA")]
 struct S {
     #[tlv(tag = "0x11")]

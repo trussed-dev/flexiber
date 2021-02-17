@@ -3,161 +3,64 @@
 #![crate_type = "proc-macro"]
 #![warn(rust_2018_idioms, trivial_casts, unused_qualifications)]
 
+mod decodable;
+use decodable::DeriveDecodableStruct;
+mod encodable;
+use encodable::DeriveEncodableStruct;
+
+
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
 use syn::{
-    Attribute, DataStruct, Field, Generics, Ident, Lifetime, Lit, Meta, MetaList, MetaNameValue, NestedMeta,
+    Attribute, Field, Ident, Lit, Meta, MetaList, MetaNameValue, NestedMeta,
 };
 use synstructure::{decl_derive, Structure};
 
 decl_derive!(
-    [UntaggedCollection, attributes(tlv)] =>
+    [Decodable, attributes(tlv)] =>
 
-    /// Derive the `Message` trait.
+    /// Derive the [`Decodable`][1] trait on a struct.
     ///
-    /// This custom derive macro can be used to automatically impl the
-    /// `Message` trait for any struct representing a message which is
-    /// encoded as an ASN.1 `SEQUENCE`.
+    /// See [toplevel documentation for the `simple-tlv_derive` crate][2] for more
+    /// information about how to use this macro.
     ///
-    /// # `#[asn1(type = "...")]` attribute
-    ///
-    /// Placing this attribute on fields of a struct makes it possible to
-    /// decode types which don't directly implement the `Decode` and `Encode`
-    /// traits but do impl `TryInto` and `From` for one of the ASN.1 types
-    /// listed below:
-    ///
-    /// - `bit-string`: performs an intermediate conversion to `der::BitString`
-    /// - `octet-string`: performs an intermediate conversion to `der::OctetString`
-    /// - `printable-string`: performs an intermediate conversion to `der::PrintableString`
-    /// - `utf8-string`: performs an intermediate conversion to `der::Utf8String`
-    ///
-    /// Note: please open a GitHub Issue if you would like to request support
-    /// for additional ASN.1 types.
-    derive_simple_tlv
+    /// [1]: https://docs.rs/simple-tlv/latest/simple_tlv/trait.Decodable.html
+    /// [2]: https://docs.rs/simple-tlv_derive/
+    derive_decodable
 );
 
-/// Custom derive for `der::Message`
-fn derive_simple_tlv(s: Structure<'_>) -> TokenStream {
+decl_derive!(
+    [Encodable, attributes(tlv)] =>
+
+    /// Derive the [`Encodable`][1] trait on a struct.
+    ///
+    /// See [toplevel documentation for the `simple-tlv_derive` crate][2] for more
+    /// information about how to use this macro.
+    ///
+    /// [1]: https://docs.rs/simple-tlv/latest/simple_tlv/trait.Decodable.html
+    /// [2]: https://docs.rs/simple-tlv_derive/
+    derive_encodable
+);
+
+/// Custom derive for `simple_tlv::Decodable`
+fn derive_decodable(s: Structure<'_>) -> TokenStream {
     let ast = s.ast();
 
-    // TODO(tarcieri/nickray): enum support
+    // TODO: enum support
     match &ast.data {
-        syn::Data::Struct(data) => DeriveStruct::derive(s, data, &ast.ident, &ast.attrs, &ast.generics),
-        other => panic!("can't derive `Message` on: {:?}", other),
+        syn::Data::Struct(data) => DeriveDecodableStruct::derive(s, data, &ast.ident, &ast.attrs),
+        other => panic!("can't derive `Decodable` on: {:?}", other),
     }
 }
 
-/// Derive stuff on a struct
-struct DeriveStruct {
-    /// Field decoders
-    decode_fields: TokenStream,
+/// Custom derive for `simple_tlv::Encodable`
+fn derive_encodable(s: Structure<'_>) -> TokenStream {
+    let ast = s.ast();
 
-    /// Bound fields of a struct to be returned
-    decode_result: TokenStream,
-
-    /// Fields of a struct to be serialized
-    encode_fields: TokenStream,
-}
-
-impl DeriveStruct {
-    pub fn derive(s: Structure<'_>, data: &DataStruct, name: &Ident, attrs: &Vec<Attribute>, generics: &Generics) -> TokenStream {
-
-        let tag = extract_tag(name, attrs);
-
-        let mut state = Self {
-            decode_fields: TokenStream::new(),
-            decode_result: TokenStream::new(),
-            encode_fields: TokenStream::new(),
-        };
-
-        for field in &data.fields {
-            state.derive_field(field);
-        }
-
-        state.finish(&s, tag, generics)
+    // TODO: enum support
+    match &ast.data {
+        syn::Data::Struct(data) => DeriveEncodableStruct::derive(s, data, &ast.ident, &ast.attrs),
+        other => panic!("can't derive `Encodable` on: {:?}", other),
     }
-
-    /// Derive handling for a particular `#[field(...)]`
-    fn derive_field(&mut self, field: &Field) {
-        let attrs = FieldAttrs::new(field);
-        self.derive_field_decoder(&attrs);
-        self.derive_field_encoder(&attrs);
-    }
-
-    /// Derive code for decoding a field of a message
-    fn derive_field_decoder(&mut self, field: &FieldAttrs) {
-        let field_name = &field.name;
-        let field_tag = field.tag;
-        let field_decoder = quote! { let #field_name = decoder.decode_tagged_value(::simple_tlv::Tag::try_from(#field_tag).unwrap())?; };
-        field_decoder.to_tokens(&mut self.decode_fields);
-
-        let field_result = quote!(#field_name,);
-        field_result.to_tokens(&mut self.decode_result);
-    }
-
-    /// Derive code for encoding a field of a message
-    fn derive_field_encoder(&mut self, field: &FieldAttrs) {
-        let field_name = &field.name;
-        let field_tag = field.tag;
-        let field_encoder = quote! { &(::simple_tlv::Tag::try_from(#field_tag).unwrap().with_value(&self.#field_name)), };
-        field_encoder.to_tokens(&mut self.encode_fields);
-    }
-
-    /// Finish deriving a struct
-    fn finish(self, s: &Structure<'_>, tag: u8, generics: &Generics) -> TokenStream {
-
-        let lifetime = match parse_lifetime(generics) {
-            Some(lifetime) => quote!(#lifetime),
-            None => quote!('_),
-        };
-
-        let decode_fields = self.decode_fields;
-        let decode_result = self.decode_result;
-        let encode_fields = self.encode_fields;
-
-        s.gen_impl(quote! {
-            gen impl simple_tlv::Tagged for @Self {
-                fn tag() -> simple_tlv::Tag {
-                    // TODO(nickray): FIXME FIXME
-                    use core::convert::TryFrom;
-                    simple_tlv::Tag::try_from(#tag).unwrap()
-                }
-            }
-
-            gen impl simple_tlv::Container for @Self {
-                fn fields<F, T>(&self, field_encoder: F) -> simple_tlv::Result<T>
-                where
-                    F: FnOnce(&[&dyn simple_tlv::Encodable]) -> simple_tlv::Result<T>,
-                {
-                    use core::convert::TryFrom;
-                    field_encoder(&[#encode_fields])
-                }
-            }
-            gen impl<'a> core::convert::TryFrom<simple_tlv::TaggedSlice<'a>> for @Self {
-                type Error = simple_tlv::Error;
-
-                fn try_from(tagged_slice: simple_tlv::TaggedSlice<'a>) -> simple_tlv::Result<S> {
-                    use core::convert::TryInto;
-                    tagged_slice.tag().assert_eq(simple_tlv::Tag::try_from(#tag).unwrap())?;
-                    tagged_slice.decode_nested(|decoder| {
-                        #decode_fields
-
-                        Ok(Self { #decode_result })
-                    })
-                }
-            }
-        })
-    }
-}
-
-/// Parse the first lifetime of the "self" type of the custom derive
-///
-/// Returns `None` if there is no first lifetime.
-fn parse_lifetime(generics: &Generics) -> Option<&Lifetime> {
-    generics
-        .lifetimes()
-        .next()
-        .map(|ref lt_ref| &lt_ref.lifetime)
 }
 
 /// Attributes of a field
@@ -237,8 +140,3 @@ fn extract_tag(name: &Ident, attrs: &Vec<Attribute>) -> u8 {
         panic!("SIMPLE-TLV tag missing for `{}`", name);
     }
 }
-
-// /// SIMPLE-TLV tags supported by the `#[tlv(tag = "...")]` attribute
-// #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-// #[allow(clippy::enum_variant_names)]
-// struct Tag(u8);

@@ -33,7 +33,7 @@
 extern crate alloc;
 
 #[cfg(feature = "derive")]
-pub use simple_tlv_derive::UntaggedCollection;
+pub use simple_tlv_derive::{Decodable, Encodable};
 
 #[cfg(feature = "std")]
 extern crate std;

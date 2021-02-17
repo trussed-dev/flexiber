@@ -1,18 +1,15 @@
 [package]
 name = "simple-tlv"
 version = "0.1.0"
-authors = ["Nicolas Stalder <n@stalder.io>"]
+authors = ["Nicolas Stalder <n@stalder.io>", "RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
 edition = "2018"
 description = "Encoding and decoding of SIMPLE-TLV as described in ISO 7816-4, without allocations."
 categories = ["cryptography", "data-structures", "encoding", "no-std"]
 keywords = ["crypto"]
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-# der = "0.2.3"
-# simple-tlv_derive = { version = "0.1", optional = true, path = "derive" }
 simple-tlv_derive = { version = "0.1", optional = true, path = "derive" }
 
 [dependencies.heapless]
@@ -20,7 +17,6 @@ version = "0.6.0"
 optional = true
 
 [features]
-# default = ["heapless"]
 alloc = []
 derive = ["simple-tlv_derive"]
 std = ["alloc"]

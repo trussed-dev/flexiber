@@ -233,62 +233,37 @@ where
 //     }
 // }
 
-impl Encodable for [u8; 2] {
-    fn encoded_length(&self) -> Result<Length> {
-        Ok(2u8.into())
-    }
+macro_rules! impl_array {
+    ($($N:literal),*) => {
+        $(
+        impl Encodable for [u8; $N] {
+            fn encoded_length(&self) -> Result<Length> {
+                Ok(($N as u8).into())
+            }
 
-    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-        encoder.bytes(self.as_ref())
+            /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+            fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+                encoder.bytes(self.as_ref())
+            }
+        }
+
+        impl Decodable<'_> for [u8; $N] {
+            fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
+                use core::convert::TryInto;
+                let bytes: &[u8] = decoder.bytes($N as u8)?;
+                Ok(bytes.try_into().unwrap())
+            }
+        }
+        )*
     }
 }
 
-impl Encodable for [u8; 3] {
-    fn encoded_length(&self) -> Result<Length> {
-        Ok(3u8.into())
-    }
-
-    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-        encoder.bytes(self.as_ref())
-    }
-}
-
-impl Encodable for [u8; 4] {
-    fn encoded_length(&self) -> Result<Length> {
-        Ok(4u8.into())
-    }
-
-    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-        encoder.bytes(self.as_ref())
-    }
-}
-
-impl Decodable<'_> for [u8; 2] {
-    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-        use core::convert::TryInto;
-        let bytes: &[u8] = decoder.bytes(2u8)?;
-        Ok(bytes.try_into().unwrap())
-    }
-}
-
-impl Decodable<'_> for [u8; 3] {
-    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-        use core::convert::TryInto;
-        let bytes: &[u8] = decoder.bytes(3u8)?;
-        Ok(bytes.try_into().unwrap())
-    }
-}
-
-impl Decodable<'_> for [u8; 4] {
-    fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-        use core::convert::TryInto;
-        let bytes: &[u8] = decoder.bytes(4u8)?;
-        Ok(bytes.try_into().unwrap())
-    }
-}
+impl_array!(
+    0,1,2,3,4,5,6,7,8,9,
+    10,11,12,13,14,15,16,17,18,19,
+    20,21,22,23,24,25,26,27,28,29,
+    30,31,32
+);
 
 #[cfg(test)]
 mod tests {

@@ -1,8 +1,12 @@
 [package]
 name = "simple-tlv_derive"
 version = "0.1.0"
-authors = ["Nicolas Stalder <n@stalder.io>"]
+authors = ["Nicolas Stalder <n@stalder.io>", "RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
 edition = "2018"
+description = "Procedural macros to derive `Decodable` and `Encodable` from `simple-tlv`."
+categories = ["cryptography", "data-structures", "encoding", "no-std"]
+keywords = ["crypto"]
 
 [lib]
 proc-macro = true
