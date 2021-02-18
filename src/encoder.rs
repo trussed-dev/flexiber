@@ -75,6 +75,17 @@ impl<'a> Encoder<'a> {
         }
     }
 
+    /// Encode a collection of values which impl the [`Encodable`] trait under a given tag.
+    pub fn encode_untagged_collection(&mut self, encodables: &[&dyn Encodable]) -> Result<()> {
+        let expected_len = Length::try_from(encodables)?;
+        let mut nested_encoder = Encoder::new(self.reserve(expected_len)?);
+
+        for encodable in encodables {
+            encodable.encode(&mut nested_encoder)?;
+        }
+        Ok(())
+    }
+
     /// Encode a single byte into the backing buffer.
     pub(crate) fn byte(&mut self, byte: u8) -> Result<()> {
         match self.reserve(1u8)?.first_mut() {

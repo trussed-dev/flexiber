@@ -95,7 +95,7 @@ impl FieldAttrs {
     }
 }
 
-fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (u8, bool) {
+fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<u8>, bool) {
     let mut tag = None;
     let mut slice = false;
 
@@ -149,6 +149,12 @@ fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (u8, bool) {
             ),
         }
     }
+
+    (tag, slice)
+}
+
+fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (u8, bool) {
+    let (tag, slice) = extract_attrs_optional_tag(name, attrs);
 
     if let Some(tag) = tag {
         (tag, slice)

@@ -17,7 +17,7 @@ jobs:
         profile: minimal
 
     - name: Build Documentation
-      run: cargo doc --no-deps && scripts/make-toplevel-index.sh
+      run: cargo doc --features derive && scripts/make-toplevel-index.sh
 
     - name: Deploy Docs
       uses: peaceiris/actions-gh-pages@v3

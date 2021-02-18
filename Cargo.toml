@@ -6,7 +6,7 @@ license = "Apache-2.0 OR MIT"
 edition = "2018"
 description = "Encoding and decoding of SIMPLE-TLV as described in ISO 7816-4, without allocations."
 categories = ["cryptography", "data-structures", "encoding", "no-std"]
-keywords = ["crypto"]
+keywords = ["crypto", "no_std", "serialization"]
 readme = "README.md"
 
 [dependencies]
