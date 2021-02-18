@@ -3,7 +3,7 @@ use quote::{quote, ToTokens};
 use syn::{Attribute, DataStruct, Field, Ident};
 use synstructure::Structure;
 
-use crate::{extract_tag, FieldAttrs};
+use crate::{extract_attrs, FieldAttrs};
 
 /// Derive Decodable on a struct
 pub(crate) struct DeriveDecodableStruct {
@@ -17,7 +17,7 @@ pub(crate) struct DeriveDecodableStruct {
 impl DeriveDecodableStruct {
     pub fn derive(s: Structure<'_>, data: &DataStruct, name: &Ident, attrs: &[Attribute]) -> TokenStream {
 
-        let tag = extract_tag(name, attrs);
+        let (tag, _) = extract_attrs(name, attrs);
 
         let mut state = Self {
             decode_fields: TokenStream::new(),
@@ -41,7 +41,14 @@ impl DeriveDecodableStruct {
     fn derive_field_decoder(&mut self, field: &FieldAttrs) {
         let field_name = &field.name;
         let field_tag = field.tag;
-        let field_decoder = quote! { let #field_name = decoder.decode_tagged_value(::simple_tlv::Tag::try_from(#field_tag).unwrap())?; };
+        let field_decoder = if field.slice {
+            quote! { let #field_name =
+                decoder.decode_tagged_slice(::simple_tlv::Tag::try_from(#field_tag).unwrap())?.try_into()
+                    .map_err(|_| simple_tlv::ErrorKind::Length { tag: simple_tlv::Tag::try_from(#field_tag).unwrap() })?;
+            }
+        } else {
+            quote! { let #field_name = decoder.decode_tagged_value(::simple_tlv::Tag::try_from(#field_tag).unwrap())?; }
+        };
         field_decoder.to_tokens(&mut self.decode_fields);
 
         let field_result = quote!(#field_name,);
@@ -58,7 +65,7 @@ impl DeriveDecodableStruct {
             gen impl<'a> core::convert::TryFrom<simple_tlv::TaggedSlice<'a>> for @Self {
                 type Error = simple_tlv::Error;
 
-                fn try_from(tagged_slice: simple_tlv::TaggedSlice<'a>) -> simple_tlv::Result<S> {
+                fn try_from(tagged_slice: simple_tlv::TaggedSlice<'a>) -> simple_tlv::Result<Self> {
                     use core::convert::TryInto;
                     tagged_slice.tag().assert_eq(simple_tlv::Tag::try_from(#tag).unwrap())?;
                     tagged_slice.decode_nested(|decoder| {

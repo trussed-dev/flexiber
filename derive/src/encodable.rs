@@ -3,7 +3,7 @@ use quote::{quote, ToTokens};
 use syn::{Attribute, DataStruct, Field, Ident};
 use synstructure::Structure;
 
-use crate::{extract_tag, FieldAttrs};
+use crate::{extract_attrs, FieldAttrs};
 
 /// Derive Encodable on a struct
 pub(crate) struct DeriveEncodableStruct {
@@ -14,7 +14,7 @@ pub(crate) struct DeriveEncodableStruct {
 impl DeriveEncodableStruct {
     pub fn derive(s: Structure<'_>, data: &DataStruct, name: &Ident, attrs: &[Attribute]) -> TokenStream {
 
-        let tag = extract_tag(name, attrs);
+        let (tag, _) = extract_attrs(name, attrs);
 
         let mut state = Self {
             encode_fields: TokenStream::new(),
@@ -37,7 +37,11 @@ impl DeriveEncodableStruct {
     fn derive_field_encoder(&mut self, field: &FieldAttrs) {
         let field_name = &field.name;
         let field_tag = field.tag;
-        let field_encoder = quote! { &(::simple_tlv::Tag::try_from(#field_tag).unwrap().with_value(&self.#field_name)), };
+        let field_encoder = if field.slice {
+            quote! { &(::simple_tlv::TaggedSlice::from(simple_tlv::Tag::try_from(#field_tag).unwrap(), &self.#field_name)?), }
+        } else {
+            quote! { &(::simple_tlv::Tag::try_from(#field_tag).unwrap().with_value(&self.#field_name)), }
+        };
         field_encoder.to_tokens(&mut self.encode_fields);
     }
 

@@ -1,21 +1,18 @@
 // pub use der::{Decodable, Encodable};
 //! Trait definitions
 
-use core::convert::TryFrom;
+use core::convert::{TryFrom, TryInto};
 use crate::{Decoder, Encoder, Error, header::Header, Length, Result, Tag, TaggedSlice, TaggedValue};
 
 #[cfg(feature = "alloc")]
 use {
     alloc::vec::Vec,
-    core::{convert::TryInto, iter},
+    core::iter,
     crate::ErrorKind,
 };
 
 #[cfg(feature = "heapless")]
-use {
-    core::convert::TryInto,
-    crate::ErrorKind,
-};
+use crate::ErrorKind;
 
 /// Decoding trait.
 ///
@@ -244,27 +241,38 @@ where
 //     }
 // }
 
+impl<'a> Encodable for &'a [u8] {
+    fn encoded_length(&self) -> Result<Length> {
+        self.len().try_into()
+    }
+
+    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+        encoder.bytes(self)
+    }
+}
+
 macro_rules! impl_array {
     ($($N:literal),*) => {
         $(
-        impl Encodable for [u8; $N] {
-            fn encoded_length(&self) -> Result<Length> {
-                Ok(($N as u8).into())
+            impl Encodable for [u8; $N] {
+                fn encoded_length(&self) -> Result<Length> {
+                    Ok(($N as u8).into())
+                }
+
+                /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+                fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+                    encoder.bytes(self.as_ref())
+                }
             }
 
-            /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
-            fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-                encoder.bytes(self.as_ref())
+            impl Decodable<'_> for [u8; $N] {
+                fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
+                    use core::convert::TryInto;
+                    let bytes: &[u8] = decoder.bytes($N as u8)?;
+                    Ok(bytes.try_into().unwrap())
+                }
             }
-        }
-
-        impl Decodable<'_> for [u8; $N] {
-            fn decode(decoder: &mut Decoder<'_>) -> Result<Self> {
-                use core::convert::TryInto;
-                let bytes: &[u8] = decoder.bytes($N as u8)?;
-                Ok(bytes.try_into().unwrap())
-            }
-        }
         )*
     }
 }
@@ -331,10 +339,10 @@ mod tests {
         {
             // both approaches equivalent
             field_encoder(&[
-                &(Tag::try_from(0x11).unwrap().with_value(&self.x)),
+                &(Tag::try_from(0x11).unwrap().with_value(&self.x.as_ref())),
                 // &self.x.tagged(Tag::try_from(0x11).unwrap()),
-                &self.y.tagged(Tag::try_from(0x22).unwrap()),
-                &self.z.tagged(Tag::try_from(0x33).unwrap()),
+                &self.y.as_ref().tagged(Tag::try_from(0x22).unwrap()),
+                &self.z.as_ref().tagged(Tag::try_from(0x33).unwrap()),
 
             ])
         }
@@ -396,7 +404,7 @@ mod tests {
         {
             field_encoder(&[
                 &self.s.tagged(Tag::try_from(0x1).unwrap()),
-                &self.t.tagged(Tag::try_from(0x2).unwrap()),
+                &self.t.as_ref().tagged(Tag::try_from(0x2).unwrap()),
             ])
         }
     }
@@ -464,7 +472,7 @@ mod tests {
         {
             field_encoder(&[
                 &self.s,
-                &self.t.tagged(Tag::try_from(0x2).unwrap()),
+                &self.t.as_ref().tagged(Tag::try_from(0x2).unwrap()),
             ])
         }
     }

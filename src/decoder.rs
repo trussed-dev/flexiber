@@ -42,6 +42,13 @@ impl<'a> Decoder<'a> {
         Self::new(tagged.as_bytes()).decode()
     }
 
+    /// Decode a TaggedSlice with tag checked to be as expected, returning the value
+    pub fn decode_tagged_slice(&mut self, tag: crate::Tag) -> Result<&'a [u8]> {
+        let tagged: crate::TaggedSlice = self.decode()?;
+        tagged.tag().assert_eq(tag)?;
+        Ok(tagged.as_bytes())
+    }
+
     /// Return an error with the given [`ErrorKind`], annotating it with
     /// context about where the error occurred.
     pub fn error<T>(&mut self, kind: ErrorKind) -> Result<T> {

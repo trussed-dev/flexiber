@@ -5,14 +5,21 @@
 use simple_tlv::{Decodable, Encodable};
 
 #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
-#[tlv(tag = "AA")]
+#[tlv(tag = "0xAA")]
 struct S {
-    #[tlv(tag = "11")]
+    #[tlv(slice, tag = "0x11")]
     x: [u8; 2],
-    #[tlv(tag = "22")]
+    #[tlv(slice, tag = "0x22")]
     y: [u8; 3],
-    #[tlv(tag = "33")]
+    #[tlv(slice, tag = "0x33")]
     z: [u8; 4],
+}
+
+#[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
+#[tlv(tag = "0xBB")]
+struct T {
+    #[tlv(tag = "0x44", slice)]
+    x: [u8; 1234],
 }
 
 #[test]
@@ -35,3 +42,25 @@ fn derived_reconstruct() {
     assert_eq!(s, s2);
 }
 
+#[test]
+fn pretty_big() {
+    let mut x = [0u8; 1234];
+    for (i, x) in x.iter_mut().enumerate() {
+        *x = i as _;
+    };
+
+    let t = T { x };
+
+    let mut buf = [0u8; 1024];
+    assert!(t.encode_to_slice(&mut buf).is_err());
+
+    let mut buf = [0u8; 1500];
+    let encoded = t.encode_to_slice(&mut buf).unwrap();
+
+    assert_eq!(&encoded[..8], [
+                    // 1234 + 4
+        0xBB, 0xFF, 0x04, 0xD6,
+                       // 1234
+            0x44, 0xFF, 0x04, 0xD2]);
+    assert_eq!(&encoded[8..], x);
+}

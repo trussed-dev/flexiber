@@ -1,4 +1,8 @@
 //! Custom derive support for the `simple-tlv` crate
+//!
+//! With `#[tlv(slice)]` set, `Encodable` should work for fields implementing `AsRef<[u8]>`,
+//! and `Decodable` should work for fields implementing `TryFrom<[u8]>`, even if the field
+//! is not `Decodable` or `Encodable`.
 
 #![crate_type = "proc-macro"]
 #![warn(rust_2018_idioms, trivial_casts, unused_qualifications)]
@@ -69,8 +73,11 @@ struct FieldAttrs {
     /// Name of the field
     pub name: Ident,
 
-    /// Value of the `#[asn1(type = "...")]` attribute if provided
+    /// Value of the `#[tlv(tag = "...")]` attribute if provided
     pub tag: u8,
+
+    /// Whether the `#[tlv(slice)]` attribute was set
+    pub slice: bool
 }
 
 impl FieldAttrs {
@@ -82,14 +89,15 @@ impl FieldAttrs {
             .cloned()
             .expect("no name on struct field i.e. tuple structs unsupported");
 
-        let tag = extract_tag(&name, &field.attrs);
+        let (tag, slice) = extract_attrs(&name, &field.attrs);
 
-        Self { name, tag }
+        Self { name, tag, slice }
     }
 }
 
-fn extract_tag(name: &Ident, attrs: &[Attribute]) -> u8 {
+fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (u8, bool) {
     let mut tag = None;
+    let mut slice = false;
 
     for attr in attrs {
         if !attr.path.is_ident("tlv") {
@@ -97,45 +105,53 @@ fn extract_tag(name: &Ident, attrs: &[Attribute]) -> u8 {
         }
 
         match attr.parse_meta().expect("error parsing `tlv` attribute") {
-            Meta::List(MetaList { nested, .. }) if nested.len() == 1 => {
-                match nested.first() {
-                    Some(NestedMeta::Meta(Meta::NameValue(MetaNameValue {
-                        path,
-                        lit: Lit::Str(lit_str),
-                        ..
-                    }))) => {
-                        // Parse the `type = "..."` attribute
-                        if !path.is_ident("tag") {
-                            panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
+            Meta::List(MetaList { nested, .. }) if !nested.is_empty() => {
+                for entry in nested {
+                    match entry {
+                        NestedMeta::Meta(Meta::Path(path)) => {
+                            if !path.is_ident("slice") {
+                                panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
+                            }
+                            slice = true;
                         }
+                        NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+                            path,
+                            lit: Lit::Str(lit_str),
+                            ..
+                        })) => {
+                            // Parse the `type = "..."` attribute
+                            if !path.is_ident("tag") {
+                                panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
+                            }
 
-                        if tag.is_some() {
-                            panic!("duplicate SIMPLE-TLV `tag` attribute for field: {}", name);
-                        }
+                            if tag.is_some() {
+                                panic!("duplicate SIMPLE-TLV `tag` attribute for field: {}", name);
+                            }
 
-                        let possibly_with_prefix = lit_str.value();
-                        let without_prefix = possibly_with_prefix.trim_start_matches("0x");
-                        let tag_value = u8::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
-                        if tag_value == 0 || tag_value == 255 {
-                            panic!("SIMPLE-TLV tags must not be zero or 255");
+                            let possibly_with_prefix = lit_str.value();
+                            let without_prefix = possibly_with_prefix.trim_start_matches("0x");
+                            let tag_value = u8::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
+                            if tag_value == 0 || tag_value == 255 {
+                                panic!("SIMPLE-TLV tags must not be zero or 255");
+                            }
+                            tag = Some(tag_value);
                         }
-                        tag = Some(tag_value);
+                        other => panic!(
+                            "a malformed `tlv` attribute for field `{}`: {:?}",
+                            name, other
+                        ),
                     }
-                    other => panic!(
-                        "malformed `tlv` attribute for field `{}`: {:?}",
-                        name, other
-                    ),
                 }
             }
             other => panic!(
-                "malformed `tlv` attribute for field `{}`: {:?}",
+                "malformed `tlv` attribute for field `{}`: {:#?}",
                 name, other
             ),
         }
     }
 
     if let Some(tag) = tag {
-        tag
+        (tag, slice)
     } else {
         panic!("SIMPLE-TLV tag missing for `{}`", name);
     }
