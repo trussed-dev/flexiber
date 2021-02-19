@@ -226,6 +226,16 @@
 <span id="223">223</span>
 <span id="224">224</span>
 <span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>}, <span class="ident">fmt</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TaggedValue</span>};
@@ -312,28 +322,38 @@
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Tag</span> {
+<span class="doccomment">/// This is the common trait that types to be used as tags</span>
+<span class="doccomment">/// are supposed to implement.</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">TagLike</span>: <span class="ident">Copy</span> <span class="op">+</span> <span class="ident">PartialEq</span> <span class="op">+</span> <span class="ident">Sized</span> {
+    <span class="doccomment">/// To stick with one Error type, make sure the tag type can somehow</span>
+    <span class="doccomment">/// or other be coerced into a BerTag.</span>
+    <span class="kw">fn</span> <span class="ident">embedding</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Tag</span>;
+
     <span class="doccomment">/// Assert that this [`Tag`] matches the provided expected tag.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// On mismatch, returns an [`Error`] with [`ErrorKind::UnexpectedTag`].</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">assert_eq</span>(<span class="self">self</span>, <span class="ident">expected</span>: <span class="ident">Tag</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Tag</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">assert_eq</span>(<span class="self">self</span>, <span class="ident">expected</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span> <span class="op">=</span><span class="op">=</span> <span class="ident">expected</span> {
             <span class="prelude-val">Ok</span>(<span class="self">self</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">Err</span>(<span class="ident">ErrorKind</span>::<span class="ident">UnexpectedTag</span> {
-                <span class="ident">expected</span>: <span class="prelude-val">Some</span>(<span class="ident">expected</span>),
-                <span class="ident">actual</span>: <span class="self">self</span>,
+                <span class="ident">expected</span>: <span class="prelude-val">Some</span>(<span class="ident">expected</span>.<span class="ident">embedding</span>()),
+                <span class="ident">actual</span>: <span class="self">self</span>.<span class="ident">embedding</span>(),
             }
             .<span class="ident">into</span>())
         }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">with_value</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">value</span>: <span class="ident">V</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Ergonomic way to get a TaggedValue for a given tag and value</span>
+    <span class="kw">fn</span> <span class="ident">with_value</span><span class="op">&lt;</span><span class="ident">V</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">value</span>: <span class="ident">V</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="ident">V</span>, <span class="self">Self</span><span class="op">&gt;</span> {
         <span class="ident">TaggedValue</span>::<span class="ident">new</span>(<span class="self">self</span>, <span class="ident">value</span>)
     }
-    <span class="comment">// fn tagged(&amp;self, tag: Tag) -&gt; TaggedValue&lt;&amp;Self&gt; {</span>
-    <span class="comment">//     TaggedValue::new(tag, self)</span>
-    <span class="comment">// }</span>
+}
+
+<span class="kw">impl</span> <span class="ident">TagLike</span> <span class="kw">for</span> <span class="ident">Tag</span> {
+    <span class="kw">fn</span> <span class="ident">embedding</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Tag</span> {
+        <span class="self">self</span>
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">Tag</span> {

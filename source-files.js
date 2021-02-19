@@ -1,5 +1,5 @@
 var N = null;var sourcesIndex = {};
-sourcesIndex["flexiber"] = {"name":"","files":["decoder.rs","encoder.rs","error.rs","header.rs","length.rs","lib.rs","slice.rs","tag.rs","tagged.rs","traits.rs"]};
+sourcesIndex["flexiber"] = {"name":"","files":["decoder.rs","encoder.rs","error.rs","header.rs","length.rs","lib.rs","simpletag.rs","slice.rs","tag.rs","tagged.rs","traits.rs"]};
 sourcesIndex["flexiber_derive"] = {"name":"","files":["decodable.rs","encodable.rs","lib.rs"]};
 sourcesIndex["proc_macro2"] = {"name":"","files":["detection.rs","fallback.rs","lib.rs","marker.rs","parse.rs","wrapper.rs"]};
 sourcesIndex["quote"] = {"name":"","files":["ext.rs","format.rs","ident_fragment.rs","lib.rs","runtime.rs","spanned.rs","to_tokens.rs"]};

@@ -583,7 +583,7 @@
 <span class="doccomment">//! Trait definitions</span>
 
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decoder</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">header</span>::<span class="ident">Header</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">Tag</span>, <span class="ident">TaggedSlice</span>, <span class="ident">TaggedValue</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decoder</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">header</span>::<span class="ident">Header</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">Tag</span>, <span class="ident">TaggedSlice</span>, <span class="ident">TaggedValue</span>, <span class="ident">TagLike</span>};
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>)]</span>
 <span class="kw">use</span> {
@@ -612,11 +612,11 @@
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Decodable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">T</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">X</span><span class="op">&gt;</span> <span class="ident">Decodable</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">X</span>
 <span class="kw">where</span>
-    <span class="ident">T</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">TaggedSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span><span class="op">&gt;</span>,
+    <span class="ident">X</span>: <span class="ident">TryFrom</span><span class="op">&lt;</span><span class="ident">TaggedSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">Error</span><span class="op">&gt;</span>,
 {
-    <span class="kw">fn</span> <span class="ident">decode</span>(<span class="ident">decoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Decoder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">decode</span>(<span class="ident">decoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Decoder</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="ident">TaggedSlice</span>::<span class="ident">decode</span>(<span class="ident">decoder</span>)
             .<span class="ident">and_then</span>(<span class="self">Self</span>::<span class="ident">try_from</span>)
             .<span class="ident">or_else</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">decoder</span>.<span class="ident">error</span>(<span class="ident">e</span>.<span class="ident">kind</span>()))
@@ -719,13 +719,13 @@
 }
 
 <span class="doccomment">/// Types that can be tagged.</span>
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait</span> <span class="ident">Taggable</span>: <span class="ident">Sized</span> {
-    <span class="kw">fn</span> <span class="ident">tagged</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tag</span>: <span class="ident">Tag</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="self">Self</span><span class="op">&gt;</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait</span> <span class="ident">Taggable</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">TagLike</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
+    <span class="kw">fn</span> <span class="ident">tagged</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tag</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">T</span><span class="op">&gt;</span> {
         <span class="ident">TaggedValue</span>::<span class="ident">new</span>(<span class="ident">tag</span>, <span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">X</span><span class="op">&gt;</span> <span class="ident">Taggable</span> <span class="kw">for</span> <span class="ident">X</span> <span class="kw">where</span> <span class="ident">X</span>: <span class="ident">Sized</span> {}
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">X</span><span class="op">&gt;</span> <span class="ident">Taggable</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">X</span> <span class="kw">where</span> <span class="ident">X</span>: <span class="ident">Sized</span>, <span class="ident">T</span>: <span class="ident">TagLike</span> {}
 
 <span class="comment">// /// Types with an associated SIMPLE-TLV [`Tag`].</span>
 <span class="comment">// pub trait Tagged {</span>
@@ -869,7 +869,7 @@
 <span class="kw">mod</span> <span class="ident">tests</span> {
 
     <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryFrom</span>;
-    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>, <span class="ident">Tag</span>, <span class="ident">TaggedSlice</span>};
+    <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">Error</span>, <span class="prelude-ty">Result</span>, <span class="ident">Tag</span>, <span class="ident">TaggedSlice</span>, <span class="ident">TagLike</span>};
     <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">Taggable</span>, <span class="ident">Tagged</span>, <span class="ident">Container</span>};
 
     <span class="comment">// The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields</span>

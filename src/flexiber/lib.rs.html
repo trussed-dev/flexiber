@@ -56,6 +56,8 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # flexiber</span>
 <span class="doccomment">//!</span>
@@ -96,6 +98,7 @@
 <span class="kw">mod</span> <span class="ident">error</span>;
 <span class="kw">mod</span> <span class="ident">header</span>;
 <span class="kw">mod</span> <span class="ident">length</span>;
+<span class="kw">mod</span> <span class="ident">simpletag</span>;
 <span class="kw">mod</span> <span class="ident">slice</span>;
 <span class="kw">mod</span> <span class="ident">tag</span>;
 <span class="kw">mod</span> <span class="ident">tagged</span>;
@@ -105,8 +108,9 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">encoder</span>::<span class="ident">Encoder</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error</span>::{<span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">length</span>::<span class="ident">Length</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">simpletag</span>::<span class="ident">SimpleTag</span>;
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">slice</span>::<span class="ident">Slice</span>;
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">tag</span>::{<span class="ident">Class</span>, <span class="ident">Tag</span>};
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">tag</span>::{<span class="ident">Class</span>, <span class="ident">Tag</span>, <span class="ident">TagLike</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">tagged</span>::{<span class="ident">TaggedSlice</span>, <span class="ident">TaggedValue</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">traits</span>::{<span class="ident">Container</span>, <span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">Tagged</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;heapless&quot;</span>)]</span>
