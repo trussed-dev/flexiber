@@ -153,26 +153,28 @@ impl<'a> Encoder<'a> {
 
 #[cfg(test)]
 mod tests {
-    use core::convert::TryFrom;
     use crate::{Encodable, Tag, TaggedSlice};
 
     #[test]
     fn zero_length() {
-        let tv = TaggedSlice::from(Tag::try_from(42).unwrap(), &[]).unwrap();
+        let tv = TaggedSlice::from(Tag::universal(5), &[]).unwrap();
         let mut buf = [0u8; 4];
-        assert_eq!(tv.encode_to_slice(&mut buf).unwrap(), &[0x2A, 0x00]);
+        assert_eq!(tv.encode_to_slice(&mut buf).unwrap(), &[0x5, 0x00]);
+
+        let tv = TaggedSlice::from(Tag::application(5).constructed(), &[]).unwrap();
+        let mut buf = [0u8; 4];
+        assert_eq!(tv.encode_to_slice(&mut buf).unwrap(), &[(0b01 << 6) | (1 << 5) | 5, 0x00]);
     }
+
+    // use super::Encoder;
+    // use crate::{ErrorKind, Length};
+
+    // #[test]
+    // fn overlength_message() {
+    //     let mut buffer = [];
+    //     let mut encoder = Encoder::new(&mut buffer);
+    //     let err = false.encode(&mut encoder).err().unwrap();
+    //     assert_eq!(err.kind(), ErrorKind::Overlength);
+    //     assert_eq!(err.position(), Some(Length::zero()));
+    // }
 }
-
-//     use super::Encoder;
-//     use crate::{Encodable, ErrorKind, Length};
-
-//     #[test]
-//     fn overlength_message() {
-//         let mut buffer = [];
-//         let mut encoder = Encoder::new(&mut buffer);
-//         let err = false.encode(&mut encoder).err().unwrap();
-//         assert_eq!(err.kind(), ErrorKind::Overlength);
-//         assert_eq!(err.position(), Some(Length::zero()));
-//     }
-// }

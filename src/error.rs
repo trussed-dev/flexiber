@@ -103,6 +103,9 @@ pub enum ErrorKind {
     /// Operation failed due to previous error
     Failed,
 
+    /// Class has more than 2 bytes
+    InvalidClass { value: u8 },
+
     /// Invalid tag
     InvalidTag {
         /// Raw byte value of the tag
@@ -178,6 +181,10 @@ pub enum ErrorKind {
     //     /// Tag of the unexpected value
     //     tag: Tag,
     // },
+
+    /// Tag does not fit in 3 bytes
+    UnsupportedTagSize,
+
 }
 
 impl ErrorKind {
@@ -192,7 +199,11 @@ impl fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ErrorKind::Failed => write!(f, "operation failed"),
+            ErrorKind::InvalidClass { value } => write!(f, "invalid class {}", value),
             ErrorKind::InvalidLength => write!(f, "length greater than protocol maximum"),
+            ErrorKind::InvalidTag { byte } => {
+                write!(f, "invalid SIMPLE-TLV tag: 0x{:02x}", byte)
+            }
             ErrorKind::Length { tag } => write!(f, "incorrect length for {}", tag),
             // ErrorKind::Noncanonical => write!(f, "DER is not canonically encoded"),
             // ErrorKind::Oid => write!(f, "malformed OID"),
@@ -220,14 +231,12 @@ impl fmt::Display for ErrorKind {
 
                 write!(f, "got {}", actual)
             }
-            ErrorKind::InvalidTag { byte } => {
-                write!(f, "invalid SIMPLE-TLV tag: 0x{:02x}", byte)
-            }
             // ErrorKind::UnknownTag { byte } => {
             //     write!(f, "unknown/unsupported ASN.1 DER tag: 0x{:02x}", byte)
             // }
             // ErrorKind::Utf8(e) => write!(f, "{}", e),
             // ErrorKind::Value { tag } => write!(f, "malformed ASN.1 DER value for {}", tag),
+            ErrorKind::UnsupportedTagSize => write!(f, "tags occupying more than 3 octets not supported"),
         }
     }
 }

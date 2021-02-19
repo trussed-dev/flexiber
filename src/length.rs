@@ -1,7 +1,7 @@
 //! Length calculations for encoded ASN.1 DER values
 
 use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Result};
-use core::{convert::{TryFrom, TryInto}, fmt, ops::Add};
+use core::{convert::TryFrom, fmt, ops::Add};
 
 /// SIMPLE-TLV-encoded length.
 ///
@@ -13,7 +13,7 @@ use core::{convert::{TryFrom, TryInto}, fmt, ops::Add};
 /// - If the first byte is `0xFF`, then the length field consists of the subsequent two bytes interpreted as
 ///   big-endian integer, with any value from zero to 65,535.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, PartialOrd, Ord)]
-pub struct Length(u16);
+pub struct Length(pub(crate) u16);
 
 impl Length {
     /// Return a length of `0`.
@@ -124,11 +124,25 @@ impl TryFrom<usize> for Length {
 impl Decodable<'_> for Length {
     fn decode(decoder: &mut Decoder<'_>) -> Result<Length> {
         match decoder.byte()? {
-            0xFF => {
-                let be_len = decoder.bytes(2u8)?;
-                Ok(Length::from(u16::from_be_bytes(be_len.try_into().unwrap())))
+            len if len < 0x80 => Ok(len.into()),
+            // we do not support indefinite lengths
+            0x80 => Err(ErrorKind::InvalidLength.into()),
+            // one byte to follow
+            0x81 => {
+                let len = decoder.byte()?;
+                // allow non-minimum encodings
+                Ok(len.into())
             }
-            len => Ok(len.into()),
+            0x82 => {
+                let len_hi = decoder.byte()? as u16;
+                let len = (len_hi << 8) | (decoder.byte()? as u16);
+                // allow non-minimum encodings
+                Ok(len.into())
+            }
+            _ => {
+                // We specialize to a maximum 3-byte length encoding of length
+                Err(ErrorKind::Overlength.into())
+            }
         }
     }
 }
@@ -136,21 +150,28 @@ impl Decodable<'_> for Length {
 impl Encodable for Length {
     fn encoded_length(&self) -> Result<Length> {
         match self.0 {
-            0..=0xFE => Ok(Length(1)),
-            _ => Ok(Length(3)),
+            0..=0x7F => Ok(Length(1)),
+            0x80..=0xFF => Ok(Length(2)),
+            0x100..=0xFFFF => Ok(Length(3)),
         }
     }
 
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
         match self.0 {
-            0..=0xFE => encoder.byte(self.0 as u8),
-            _ => {
-                encoder.byte(0xFF)?;
-                encoder.bytes(&self.0.to_be_bytes())
+            0..=0x7F => encoder.byte(self.0 as u8),
+            0x80..=0xFF => {
+                encoder.byte(0x81)?;
+                encoder.byte(self.0 as u8)
+            }
+            0x100..=0xFFFF => {
+                encoder.byte(0x82)?;
+                encoder.byte((self.0 >> 8) as u8)?;
+                encoder.byte((self.0 & 0xFF) as u8)
             }
         }
     }
 }
+
 
 impl fmt::Display for Length {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -161,37 +182,27 @@ impl fmt::Display for Length {
 #[cfg(test)]
 mod tests {
     use super::Length;
-    use crate::{Decodable, Encodable, Error, ErrorKind};
+    use crate::{Decodable, Encodable};
 
     #[test]
     fn decode() {
         assert_eq!(Length::zero(), Length::from_bytes(&[0x00]).unwrap());
 
         assert_eq!(Length::from(0x7Fu8), Length::from_bytes(&[0x7F]).unwrap());
-        assert_eq!(Length::from(0x7Fu8), Length::from_bytes(&[0xFF, 0x00, 0x7F]).unwrap());
-        assert_eq!(Length::from(0xFEu8), Length::from_bytes(&[0xFE]).unwrap());
-        assert_eq!(Length::from(0xFEu8), Length::from_bytes(&[0xFF, 0x00, 0xFE]).unwrap());
 
-        // these are the current errors, do we want them?
-        assert_eq!(Length::from_bytes(&[0xFF]).unwrap_err(), Error::from(ErrorKind::Truncated));
-        assert_eq!(Length::from_bytes(&[0xFF, 0x12]).unwrap_err(), Error::from(ErrorKind::Truncated));
-        // this is a bit clumsy to express
-        assert!(Length::from_bytes(&[0xFF, 0x12, 0x34, 0x56]).is_err());
-
+        assert_eq!(
+            Length::from(0x80u8),
+            Length::from_bytes(&[0x81, 0x80]).unwrap()
+        );
 
         assert_eq!(
             Length::from(0xFFu8),
-            Length::from_bytes(&[0xFF, 0x00, 0xFF]).unwrap()
+            Length::from_bytes(&[0x81, 0xFF]).unwrap()
         );
 
         assert_eq!(
             Length::from(0x100u16),
-            Length::from_bytes(&[0xFF, 0x01, 0x00]).unwrap()
-        );
-
-        assert_eq!(
-            Length::from(0xFFFFu16),
-            Length::from_bytes(&[0xFF, 0xFF, 0xFF]).unwrap()
+            Length::from_bytes(&[0x82, 0x01, 0x00]).unwrap()
         );
     }
 
@@ -210,23 +221,23 @@ mod tests {
         );
 
         assert_eq!(
-            &[0xFE],
-            Length::from(0xFEu8).encode_to_slice(&mut buffer).unwrap()
+            &[0x81, 0x80],
+            Length::from(0x80u8).encode_to_slice(&mut buffer).unwrap()
         );
 
         assert_eq!(
-            &[0xFF, 0x00, 0xFF],
+            &[0x81, 0xFF],
             Length::from(0xFFu8).encode_to_slice(&mut buffer).unwrap()
         );
 
         assert_eq!(
-            &[0xFF, 0x01, 0x00],
+            &[0x82, 0x01, 0x00],
             Length::from(0x100u16).encode_to_slice(&mut buffer).unwrap()
         );
+    }
 
-        assert_eq!(
-            &[0xFF, 0xFF, 0xFF],
-            Length::from(0xFFFFu16).encode_to_slice(&mut buffer).unwrap()
-        );
+    #[test]
+    fn reject_indefinite_lengths() {
+        assert!(Length::from_bytes(&[0x80]).is_err());
     }
 }

@@ -1,4 +1,4 @@
-//! Custom derive support for the `simple-tlv` crate
+//! Custom derive support for the `flexiber` crate
 //!
 //! With `#[tlv(slice)]` set, `Encodable` should work for fields implementing `AsRef<[u8]>`,
 //! and `Decodable` should work for fields implementing `TryFrom<[u8]>`, even if the field
@@ -24,11 +24,11 @@ decl_derive!(
 
     /// Derive the [`Decodable`][1] trait on a struct.
     ///
-    /// See [toplevel documentation for the `simple-tlv_derive` crate][2] for more
+    /// See [toplevel documentation for the `flexiber_derive` crate][2] for more
     /// information about how to use this macro.
     ///
-    /// [1]: https://docs.rs/simple-tlv/latest/simple_tlv/trait.Decodable.html
-    /// [2]: https://docs.rs/simple-tlv_derive/
+    /// [1]: https://docs.rs/flexiber/latest/flexiber/trait.Decodable.html
+    /// [2]: https://docs.rs/flexiber_derive/
     derive_decodable
 );
 
@@ -37,15 +37,15 @@ decl_derive!(
 
     /// Derive the [`Encodable`][1] trait on a struct.
     ///
-    /// See [toplevel documentation for the `simple-tlv_derive` crate][2] for more
+    /// See [toplevel documentation for the `flexiber_derive` crate][2] for more
     /// information about how to use this macro.
     ///
-    /// [1]: https://docs.rs/simple-tlv/latest/simple_tlv/trait.Decodable.html
-    /// [2]: https://docs.rs/simple-tlv_derive/
+    /// [1]: https://docs.rs/flexiber/latest/flexiber/trait.Decodable.html
+    /// [2]: https://docs.rs/flexiber_derive/
     derive_encodable
 );
 
-/// Custom derive for `simple_tlv::Decodable`
+/// Custom derive for `flexiber::Decodable`
 fn derive_decodable(s: Structure<'_>) -> TokenStream {
     let ast = s.ast();
 
@@ -56,7 +56,7 @@ fn derive_decodable(s: Structure<'_>) -> TokenStream {
     }
 }
 
-/// Custom derive for `simple_tlv::Encodable`
+/// Custom derive for `flexiber::Encodable`
 fn derive_encodable(s: Structure<'_>) -> TokenStream {
     let ast = s.ast();
 
@@ -67,14 +67,36 @@ fn derive_encodable(s: Structure<'_>) -> TokenStream {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+struct Tag {
+    class: Class,
+    constructed: bool,
+    number: u16,
+}
+
+#[derive(Clone, Copy, Debug)]
+#[repr(u8)]
+enum Class {
+    Universal = 0b00,
+    Application = 0b01,
+    Context = 0b10,
+    Private = 0b11,
+}
+
+impl Default for Class {
+    fn default() -> Self {
+        Class::Universal
+    }
+}
+
 /// Attributes of a field
 #[derive(Debug)]
 struct FieldAttrs {
     /// Name of the field
     pub name: Ident,
 
-    /// Value of the `#[tlv(tag = "...")]` attribute if provided
-    pub tag: u8,
+    /// Value of tag to use
+    pub tag: Tag,
 
     /// Whether the `#[tlv(slice)]` attribute was set
     pub slice: bool
@@ -95,8 +117,9 @@ impl FieldAttrs {
     }
 }
 
-fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<u8>, bool) {
-    let mut tag = None;
+fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<Tag>, bool) {
+    let mut tag = Tag::default();
+    let mut tag_number_is_set = false;
     let mut slice = false;
 
     for attr in attrs {
@@ -109,10 +132,23 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<u8>,
                 for entry in nested {
                     match entry {
                         NestedMeta::Meta(Meta::Path(path)) => {
-                            if !path.is_ident("slice") {
+                            if path.is_ident("slice") {
+                                slice = true;
+                            } else if path.is_ident("universal") {
+                                tag.class = Class::Universal;
+                            } else if path.is_ident("application") {
+                                tag.class = Class::Application;
+                            } else if path.is_ident("context") {
+                                tag.class = Class::Context;
+                            } else if path.is_ident("private") {
+                                tag.class = Class::Private;
+                            } else if path.is_ident("constructed") {
+                                tag.constructed = true;
+                            } else if path.is_ident("primitive") {
+                                tag.constructed = false;
+                            } else {
                                 panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
                             }
-                            slice = true;
                         }
                         NestedMeta::Meta(Meta::NameValue(MetaNameValue {
                             path,
@@ -120,21 +156,15 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<u8>,
                             ..
                         })) => {
                             // Parse the `type = "..."` attribute
-                            if !path.is_ident("tag") {
+                            if !path.is_ident("number") {
                                 panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
-                            }
-
-                            if tag.is_some() {
-                                panic!("duplicate SIMPLE-TLV `tag` attribute for field: {}", name);
                             }
 
                             let possibly_with_prefix = lit_str.value();
                             let without_prefix = possibly_with_prefix.trim_start_matches("0x");
-                            let tag_value = u8::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
-                            if tag_value == 0 || tag_value == 255 {
-                                panic!("SIMPLE-TLV tags must not be zero or 255");
-                            }
-                            tag = Some(tag_value);
+                            let tag_number = u16::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
+                            tag.number = tag_number;
+                            tag_number_is_set = true;
                         }
                         other => panic!(
                             "a malformed `tlv` attribute for field `{}`: {:?}",
@@ -150,10 +180,14 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<u8>,
         }
     }
 
-    (tag, slice)
+    if tag_number_is_set {
+        (Some(tag), slice)
+    } else {
+        (None, slice)
+    }
 }
 
-fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (u8, bool) {
+fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (Tag, bool) {
     let (tag, slice) = extract_attrs_optional_tag(name, attrs);
 
     if let Some(tag) = tag {

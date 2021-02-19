@@ -1,19 +1,11 @@
-//! # simple-tlv
+//! # flexiber
 //!
-//! Implementation of the SIMPLE-TLV serialization format from ISO 7816-4:2005.
+//! Implementation of the BER-TLV serialization format from ISO 7816-4:2005.
 //!
-//! ### 5.2.1 SIMPLE-TLV data objects
-//! Each SIMPLE-TLV data object shall consist of two or three consecutive fields: a mandatory tag field, a
-//! mandatory length field and a conditional value field. A record (see 7.3.1) may be a SIMPLE-TLV data object.
-//! - The tag field consists of a single byte encoding a tag number from 1 to 254. The values '00' and 'FF' are
-//!   invalid for tag fields. If a record is a SIMPLE-TLV data object, then the tag may be used as record identifier.
-//! - The length field consists of one or three consecutive bytes.
-//!   - If the first byte is not set to 'FF', then the length field consists of a single byte encoding a number from
-//!     zero to 254 and denoted N.
-//!   - If the first byte is set to 'FF', then the length field continues on the subsequent two bytes with any
-//!     value encoding a number from zero to 65,535 and denoted N.
-//! - If N is zero, there is no value field, i.e., the data object is empty. Otherwise (N > 0), the value field
-//!   consists of N consecutive bytes.
+//! ITU-T X.690 (08/2015) defines the BER, CER and DER encoding rules for ASN.1
+//!
+//! The exact same document is [ISO/IET 8825-1][iso8825], which is freely available,
+//! inconveniently packed as a single PDF in a ZIP file :)
 //!
 //! ## Credits
 //! This library is a remix of `RustCrypto/utils/der`, with a view towards:
@@ -24,6 +16,8 @@
 //! The core idea taken from `der` is to have `Encodable` require an `encoded_length` method.
 //! By calling this recursively in a first pass, allocations required in other approaches are
 //! avoided.
+//!
+//! [iso8825]: https://standards.iso.org/ittf/PubliclyAvailableStandards/c068345_ISO_IEC_8825-1_2015.zip
 
 #![no_std]
 #![forbid(unsafe_code)]
@@ -33,7 +27,7 @@
 extern crate alloc;
 
 #[cfg(feature = "derive")]
-pub use simple_tlv_derive::{Decodable, Encodable};
+pub use flexiber_derive::{Decodable, Encodable};
 
 #[cfg(feature = "std")]
 extern crate std;
@@ -53,7 +47,7 @@ pub use encoder::Encoder;
 pub use error::{Error, ErrorKind, Result};
 pub use length::Length;
 pub use slice::Slice;
-pub use tag::Tag;
+pub use tag::{Class, Tag};
 pub use tagged::{TaggedSlice, TaggedValue};
 pub use traits::{Container, Decodable, Encodable, Tagged};
 #[cfg(feature = "heapless")]

@@ -301,11 +301,11 @@ mod tests {
     // tag 0xAA
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     struct S {
-        // tag 0x11
+        // tag 0x01
         x: [u8; 2],
-        // tag 0x22
+        // tag 0x02
         y: [u8; 3],
-        // tag 0x33
+        // tag 0x03
         z: [u8; 4],
     }
 
@@ -314,11 +314,11 @@ mod tests {
         type Error = Error;
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<S> {
-            tagged_slice.tag().assert_eq(Tag::try_from(0xAA).unwrap())?;
+            tagged_slice.tag().assert_eq(Tag::try_from(0x0A).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
-                let x = decoder.decode_tagged_value(Tag::try_from(0x11).unwrap())?;
-                let y = decoder.decode_tagged_value(Tag::try_from(0x22).unwrap())?;
-                let z = decoder.decode_tagged_value(Tag::try_from(0x33).unwrap())?;
+                let x = decoder.decode_tagged_value(Tag::try_from(0x01).unwrap())?;
+                let y = decoder.decode_tagged_value(Tag::try_from(0x02).unwrap())?;
+                let z = decoder.decode_tagged_value(Tag::try_from(0x03).unwrap())?;
 
                 Ok(Self { x, y, z })
             })
@@ -328,7 +328,7 @@ mod tests {
     // this is what needs to be done to get `Encodable`
     impl Tagged for S {
         fn tag() -> Tag {
-            Tag::try_from(0xAA).unwrap()
+            Tag::try_from(0x0A).unwrap()
         }
     }
 
@@ -339,10 +339,10 @@ mod tests {
         {
             // both approaches equivalent
             field_encoder(&[
-                &(Tag::try_from(0x11).unwrap().with_value(&self.x.as_ref())),
+                &(Tag::try_from(0x01).unwrap().with_value(&self.x.as_ref())),
                 // &self.x.tagged(Tag::try_from(0x11).unwrap()),
-                &self.y.as_ref().tagged(Tag::try_from(0x22).unwrap()),
-                &self.z.as_ref().tagged(Tag::try_from(0x33).unwrap()),
+                &self.y.as_ref().tagged(Tag::try_from(0x02).unwrap()),
+                &self.z.as_ref().tagged(Tag::try_from(0x03).unwrap()),
 
             ])
         }
@@ -356,10 +356,10 @@ mod tests {
         let encoded = s.encode_to_slice(&mut buf).unwrap();
 
         assert_eq!(encoded,
-            &[0xAA, 15,
-                0x11, 2, 1, 2,
-                0x22, 3, 3, 4, 5,
-                0x33, 4, 6, 7, 8, 9,
+            &[0x0A, 15,
+                0x01, 2, 1, 2,
+                0x02, 3, 3, 4, 5,
+                0x03, 4, 6, 7, 8, 9,
             ],
         );
 
@@ -381,7 +381,7 @@ mod tests {
         type Error = Error;
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
-            tagged_slice.tag().assert_eq(Tag::try_from(0xBB).unwrap())?;
+            tagged_slice.tag().assert_eq(Tag::try_from(0x0B).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
                 let s = decoder.decode_tagged_value(Tag::try_from(0x01).unwrap())?;
                 let t = decoder.decode_tagged_value(Tag::try_from(0x02).unwrap())?;
@@ -393,7 +393,7 @@ mod tests {
 
     impl Tagged for T {
         fn tag() -> Tag {
-            Tag::try_from(0xBB).unwrap()
+            Tag::try_from(0x0B).unwrap()
         }
     }
 
@@ -420,12 +420,12 @@ mod tests {
         let encoded = t.encode_to_slice(&mut buf).unwrap();
 
         assert_eq!(encoded,
-            &[0xBB, 24,
+            &[0x0B, 24,
                 0x1, 17,
-                    0xAA, 15,
-                        0x11, 2, 1, 2,
-                        0x22, 3, 3, 4, 5,
-                        0x33, 4, 6, 7, 8, 9,
+                    0x0A, 15,
+                        0x01, 2, 1, 2,
+                        0x02, 3, 3, 4, 5,
+                        0x03, 4, 6, 7, 8, 9,
                 0x2, 3,
                    0xA, 0xB, 0xC
             ],
@@ -449,7 +449,7 @@ mod tests {
         type Error = Error;
 
         fn try_from(tagged_slice: TaggedSlice<'a>) -> Result<Self> {
-            tagged_slice.tag().assert_eq(Tag::try_from(0xCC).unwrap())?;
+            tagged_slice.tag().assert_eq(Tag::try_from(0x0C).unwrap())?;
             tagged_slice.decode_nested(|decoder| {
                 let s = decoder.decode()?;
                 let t = decoder.decode_tagged_value(Tag::try_from(0x02).unwrap())?;
@@ -461,7 +461,7 @@ mod tests {
 
     impl Tagged for T2 {
         fn tag() -> Tag {
-            Tag::try_from(0xCC).unwrap()
+            Tag::try_from(0x0C).unwrap()
         }
     }
 
@@ -489,12 +489,12 @@ mod tests {
 
         assert_eq!(encoded,
             // &[0xBB, 24,
-            &[0xCC, 22,
+            &[0x0C, 22,
                 // 0x1, 17,
-                    0xAA, 15,
-                        0x11, 2, 1, 2,
-                        0x22, 3, 3, 4, 5,
-                        0x33, 4, 6, 7, 8, 9,
+                    0x0A, 15,
+                        0x01, 2, 1, 2,
+                        0x02, 3, 3, 4, 5,
+                        0x03, 4, 6, 7, 8, 9,
                 0x2, 3,
                    0xA, 0xB, 0xC
             ],

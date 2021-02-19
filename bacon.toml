@@ -27,6 +27,10 @@ need_stdout = false
 command = ["cargo", "test", "--color", "always"]
 need_stdout = true
 
+[jobs.test-derive]
+command = ["cargo", "test", "--features", "derive", "--color", "always"]
+need_stdout = true
+
 [jobs.doc]
 command = ["cargo", "doc", "--color", "always"]
 need_stdout = true

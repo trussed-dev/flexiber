@@ -143,17 +143,55 @@ mod tests {
     fn encode() {
         let mut buf = [0u8; 1024];
 
-        let short = TaggedSlice::from(Tag::try_from(0x66).unwrap(), &[1, 2, 3]).unwrap();
+        let short = TaggedSlice::from(Tag::try_from(0x06).unwrap(), &[1, 2, 3]).unwrap();
 
         assert_eq!(
             short.encode_to_slice(&mut buf).unwrap(),
-            &[0x66, 0x3, 1, 2, 3]
+            &[0x06, 0x3, 1, 2, 3]
         );
 
         let slice = &[43u8; 256];
-        let long = TaggedSlice::from(Tag::try_from(0x66).unwrap(), slice).unwrap();
+
+        let long = TaggedSlice::from(Tag::universal(0x66), slice).unwrap();
         let encoded = long.encode_to_slice(&mut buf).unwrap();
-        assert_eq!(&encoded[..4], &[0x66, 0xFF, 0x01, 0x00]);
-        assert_eq!(&encoded[4..], slice);
+        assert_eq!(&encoded[..5], &[0x1F, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::universal(0x66).constructed(), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0x3F, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::application(0x66), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0x5F, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::application(0x66).constructed(), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0x7F, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::context(0x66), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0x9F, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::context(0x66).constructed(), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0xBF, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::private(0x66), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0xDF, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
+        let long = TaggedSlice::from(Tag::private(0x66).constructed(), slice).unwrap();
+        let encoded = long.encode_to_slice(&mut buf).unwrap();
+        assert_eq!(&encoded[..5], &[0xFF, 0x66, 0x82, 0x01, 0x00]);
+        assert_eq!(&encoded[5..], slice);
+
     }
+
 }
