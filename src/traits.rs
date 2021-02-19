@@ -2,7 +2,7 @@
 //! Trait definitions
 
 use core::convert::{TryFrom, TryInto};
-use crate::{Decoder, Encoder, Error, header::Header, Length, Result, Tag, TaggedSlice, TaggedValue};
+use crate::{Decoder, Encoder, Error, header::Header, Length, Result, Tag, TaggedSlice, TaggedValue, TagLike};
 
 #[cfg(feature = "alloc")]
 use {
@@ -31,11 +31,11 @@ pub trait Decodable<'a>: Sized {
     }
 }
 
-impl<'a, T> Decodable<'a> for T
+impl<'a, X> Decodable<'a> for X
 where
-    T: TryFrom<TaggedSlice<'a>, Error = Error>,
+    X: TryFrom<TaggedSlice<'a>, Error = Error>,
 {
-    fn decode(decoder: &mut Decoder<'a>) -> Result<T> {
+    fn decode(decoder: &mut Decoder<'a>) -> Result<Self> {
         TaggedSlice::decode(decoder)
             .and_then(Self::try_from)
             .or_else(|e| decoder.error(e.kind()))
@@ -138,13 +138,13 @@ pub trait EncodableHeapless: Encodable {
 }
 
 /// Types that can be tagged.
-pub(crate) trait Taggable: Sized {
-    fn tagged(&self, tag: Tag) -> TaggedValue<&Self> {
+pub(crate) trait Taggable<T: TagLike>: Sized {
+    fn tagged(&self, tag: T) -> TaggedValue<&Self, T> {
         TaggedValue::new(tag, self)
     }
 }
 
-impl<X> Taggable for X where X: Sized {}
+impl<T, X> Taggable<T> for X where X: Sized, T: TagLike {}
 
 // /// Types with an associated SIMPLE-TLV [`Tag`].
 // pub trait Tagged {
@@ -288,7 +288,7 @@ impl_array!(
 mod tests {
 
     use core::convert::TryFrom;
-    use crate::{Decodable, Encodable, Error, Result, Tag, TaggedSlice};
+    use crate::{Decodable, Encodable, Error, Result, Tag, TaggedSlice, TagLike};
     use super::{Taggable, Tagged, Container};
 
     // The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields

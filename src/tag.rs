@@ -83,28 +83,38 @@ impl TryFrom<u8> for Tag {
     }
 }
 
-impl Tag {
+/// This is the common trait that types to be used as tags
+/// are supposed to implement.
+pub trait TagLike: Copy + PartialEq + Sized {
+    /// To stick with one Error type, make sure the tag type can somehow
+    /// or other be coerced into a BerTag.
+    fn embedding(self) -> Tag;
+
     /// Assert that this [`Tag`] matches the provided expected tag.
     ///
     /// On mismatch, returns an [`Error`] with [`ErrorKind::UnexpectedTag`].
-    pub fn assert_eq(self, expected: Tag) -> Result<Tag> {
+    fn assert_eq(self, expected: Self) -> Result<Self> {
         if self == expected {
             Ok(self)
         } else {
             Err(ErrorKind::UnexpectedTag {
-                expected: Some(expected),
-                actual: self,
+                expected: Some(expected.embedding()),
+                actual: self.embedding(),
             }
             .into())
         }
     }
 
-    pub fn with_value<V>(self, value: V) -> TaggedValue<V> {
+    /// Ergonomic way to get a TaggedValue for a given tag and value
+    fn with_value<V>(self, value: V) -> TaggedValue<V, Self> {
         TaggedValue::new(self, value)
     }
-    // fn tagged(&self, tag: Tag) -> TaggedValue<&Self> {
-    //     TaggedValue::new(tag, self)
-    // }
+}
+
+impl TagLike for Tag {
+    fn embedding(self) -> Tag {
+        self
+    }
 }
 
 impl fmt::Display for Tag {

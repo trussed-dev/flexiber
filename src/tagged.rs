@@ -1,34 +1,37 @@
 // //! Common handling for types backed by byte slices with enforcement of the
 // //! format-level length limitation of 65,535 bytes.
 
-use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag};
+use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag, TagLike};
 
 /// SIMPLE-TLV data object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct TaggedValue<V> {
-    tag: Tag,
+pub struct TaggedValue<V, T=Tag> {
+    tag: T,
     value: V,
 }
 
 /// Raw SIMPLE-TLV data object `TaggedValue<Slice<'_>>`.
-pub type TaggedSlice<'a> = TaggedValue<Slice<'a>>;
+pub type TaggedSlice<'a, T=Tag> = TaggedValue<Slice<'a>, T>;
 
-impl<V> TaggedValue<V>
+impl<V, T> TaggedValue<V, T>
+where
+    T: Copy,
 {
-    pub fn new(tag: Tag, value: V) -> Self {
+    pub fn new(tag: T, value: V) -> Self {
         Self { tag, value }
     }
 
-    pub fn tag(&self) -> Tag {
+    pub fn tag(&self) -> T {
         self.tag
     }
 }
 
-impl<'a, E> TaggedValue<&'a E>
+impl<'a, E, T> TaggedValue<&'a E, T>
 where
-    E: Encodable
+    E: Encodable,
+    T: Copy + Encodable,
 {
-    fn header(&self) -> Result<Header> {
+    fn header(&self) -> Result<Header<T>> {
         Ok(Header {
             tag: self.tag(),
             length: self.value.encoded_length()?,
@@ -36,9 +39,10 @@ where
     }
 }
 
-impl<'a, E> Encodable for TaggedValue<&'a E>
+impl<'a, E, T> Encodable for TaggedValue<&'a E, T>
 where
-    E: Encodable
+    E: Encodable,
+    T: Copy + Encodable,
 {
     fn encoded_length(&self) -> Result<Length> {
         self.header()?.encoded_length()? + self.value.encoded_length()?
@@ -49,10 +53,13 @@ where
     }
 }
 
-impl<'a> TaggedSlice<'a> {
+impl<'a, T> TaggedSlice<'a, T>
+where
+    T: Copy
+{
 
     /// Create a new tagged slice, checking lengths.
-    pub fn from(tag: Tag, slice: &'a [u8]) -> Result<Self> {
+    pub fn from(tag: T, slice: &'a [u8]) -> Result<Self> {
         Slice::new(slice)
             .map(|slice| Self { tag, value: slice })
             .map_err(|_| (ErrorKind::InvalidLength).into())
@@ -75,7 +82,7 @@ impl<'a> TaggedSlice<'a> {
 
     /// Get the SIMPLE-TLV [`Header`] for this [`TaggedSlice`] value
     #[allow(clippy::unnecessary_wraps)]
-    fn header(&self) -> Result<Header> {
+    fn header(&self) -> Result<Header<T>> {
         Ok(Header {
             tag: self.tag(),
             length: self.length(),
@@ -85,9 +92,9 @@ impl<'a> TaggedSlice<'a> {
     /// Decode nested values, creating a new [`Decoder`] for
     /// the data contained in the sequence's body and passing it to the provided
     /// [`FnOnce`].
-    pub fn decode_nested<F, T>(&self, f: F) -> Result<T>
+    pub fn decode_nested<F, R>(&self, f: F) -> Result<R>
     where
-        F: FnOnce(&mut Decoder<'a>) -> Result<T>,
+        F: FnOnce(&mut Decoder<'a>) -> Result<R>,
     {
         let mut nested_decoder = Decoder::new(self.as_bytes());
         let result = f(&mut nested_decoder)?;
@@ -95,17 +102,23 @@ impl<'a> TaggedSlice<'a> {
     }
 }
 
-impl<'a> Decodable<'a> for TaggedSlice<'a> {
-    fn decode(decoder: &mut Decoder<'a>) -> Result<TaggedSlice<'a>> {
-        let header = Header::decode(decoder)?;
+impl<'a, T> Decodable<'a> for TaggedSlice<'a, T>
+where
+    T: Decodable<'a> + TagLike,
+{
+    fn decode(decoder: &mut Decoder<'a>) -> Result<Self> {
+        let header = Header::<T>::decode(decoder)?;
         let tag = header.tag;
         let len = header.length.to_usize();
-        let value = decoder.bytes(len).map_err(|_| ErrorKind::Length { tag })?;
+        let value = decoder.bytes(len).map_err(|_| ErrorKind::Length { tag: tag.embedding() })?;
         Self::from(tag, value)
     }
 }
 
-impl<'a> Encodable for TaggedSlice<'a> {
+impl<'a, T> Encodable for TaggedSlice<'a, T>
+where
+    T: Copy + Encodable
+{
     fn encoded_length(&self) -> Result<Length> {
         self.header()?.encoded_length()? + self.length()
     }

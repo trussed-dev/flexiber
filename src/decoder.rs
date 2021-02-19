@@ -1,5 +1,5 @@
 use core::convert::TryInto;
-use crate::{Decodable, ErrorKind, Length, Result};
+use crate::{Decodable, ErrorKind, Length, Result, TagLike};
 
 /// SIMPLE-TLV decoder.
 #[derive(Debug)]
@@ -36,15 +36,15 @@ impl<'a> Decoder<'a> {
     }
 
     /// Decode a TaggedValue with tag checked to be as expected, returning the value
-    pub fn decode_tagged_value<V: Decodable<'a>>(&mut self, tag: crate::Tag) -> Result<V> {
-        let tagged: crate::TaggedSlice = self.decode()?;
+    pub fn decode_tagged_value<T: Decodable<'a> + TagLike, V: Decodable<'a>>(&mut self, tag: T) -> Result<V> {
+        let tagged: crate::TaggedSlice<T> = self.decode()?;
         tagged.tag().assert_eq(tag)?;
         Self::new(tagged.as_bytes()).decode()
     }
 
     /// Decode a TaggedSlice with tag checked to be as expected, returning the value
-    pub fn decode_tagged_slice(&mut self, tag: crate::Tag) -> Result<&'a [u8]> {
-        let tagged: crate::TaggedSlice = self.decode()?;
+    pub fn decode_tagged_slice<T: Decodable<'a> + TagLike>(&mut self, tag: T) -> Result<&'a [u8]> {
+        let tagged: crate::TaggedSlice<T> = self.decode()?;
         tagged.tag().assert_eq(tag)?;
         Ok(tagged.as_bytes())
     }

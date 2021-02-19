@@ -37,6 +37,7 @@ mod encoder;
 mod error;
 mod header;
 mod length;
+mod simpletag;
 mod slice;
 mod tag;
 mod tagged;
@@ -46,8 +47,9 @@ pub use decoder::Decoder;
 pub use encoder::Encoder;
 pub use error::{Error, ErrorKind, Result};
 pub use length::Length;
+pub use simpletag::SimpleTag;
 pub use slice::Slice;
-pub use tag::{Class, Tag};
+pub use tag::{Class, Tag, TagLike};
 pub use tagged::{TaggedSlice, TaggedValue};
 pub use traits::{Container, Decodable, Encodable, Tagged};
 #[cfg(feature = "heapless")]
