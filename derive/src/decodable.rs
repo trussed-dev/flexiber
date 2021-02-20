@@ -42,30 +42,48 @@ impl DeriveDecodableStruct {
         let field_name = &field.name;
         let tag = field.tag;
 
-        let class = tag.class as u8;
-        let constructed = tag.constructed;
-        let tag_number = tag.number;
+        let field_decoder = match tag {
+            Tag::Ber(tag) => {
+                let class = tag.class as u8;
+                let constructed = tag.constructed;
+                let tag_number = tag.number;
 
-        let field_decoder = if field.slice {
-            quote! {
-                let tag = ::flexiber::Tag::from(
-                    flexiber::Class::try_from(#class).unwrap(),
-                    #constructed,
-                    #tag_number
-                );
-                let #field_name =
-                    decoder.decode_tagged_slice(tag)?.try_into().unwrap();
-                        // .map_err(|_| flexiber::ErrorKind::Length { tag })?;
+                if field.slice {
+                    quote! {
+                        let tag = ::flexiber::Tag::from(
+                            flexiber::Class::try_from(#class).unwrap(),
+                            #constructed,
+                            #tag_number
+                        );
+                        let #field_name =
+                            decoder.decode_tagged_slice(tag)?.try_into().unwrap();
+                                // .map_err(|_| flexiber::ErrorKind::Length { tag })?;
+                    }
+                } else {
+                    quote! {
+                        let tag = ::flexiber::Tag::from(
+                            flexiber::Class::try_from(#class).unwrap(),
+                            #constructed,
+                            #tag_number
+                        );
+
+                        let #field_name = decoder.decode_tagged_value(tag)?;
+                    }
+                }
             }
-        } else {
-            quote! {
-                let tag = ::flexiber::Tag::from(
-                    flexiber::Class::try_from(#class).unwrap(),
-                    #constructed,
-                    #tag_number
-                );
-
-                let #field_name = decoder.decode_tagged_value(tag)?;
+            Tag::Simple(tag) => {
+                let field_tag = tag.0;
+                if field.slice {
+                    quote! { let #field_name =
+                        decoder.decode_tagged_slice(::flexiber::SimpleTag::try_from(#field_tag).unwrap())?.try_into()
+                            .map_err(|_| {
+                                use flexiber::TagLike;
+                                flexiber::ErrorKind::Length { tag: flexiber::SimpleTag::try_from(#field_tag).unwrap().embedding() }
+                            })?;
+                    }
+                } else {
+                    quote! { let #field_name = decoder.decode_tagged_value(::flexiber::SimpleTag::try_from(#field_tag).unwrap())?; }
+                }
             }
         };
         field_decoder.to_tokens(&mut self.decode_fields);
@@ -82,30 +100,57 @@ impl DeriveDecodableStruct {
 
         if let Some(tag) = tag {
 
-            let class = tag.class as u8;
-            let constructed = tag.constructed;
-            let tag_number = tag.number;
+            match tag {
+                Tag::Ber(tag) => {
+                    let class = tag.class as u8;
+                    let constructed = tag.constructed;
+                    let tag_number = tag.number;
 
-            s.gen_impl(quote! {
-                gen impl<'a> core::convert::TryFrom<flexiber::TaggedSlice<'a>> for @Self {
-                    type Error = flexiber::Error;
+                    s.gen_impl(quote! {
+                        gen impl<'a> core::convert::TryFrom<flexiber::TaggedSlice<'a>> for @Self {
+                            type Error = flexiber::Error;
 
-                    fn try_from(tagged_slice: flexiber::TaggedSlice<'a>) -> flexiber::Result<Self> {
-                        use core::convert::TryInto;
-                        let tag = ::flexiber::Tag::from(
-                            flexiber::Class::try_from(#class).unwrap(),
-                            #constructed,
-                            #tag_number
-                        );
-                        tagged_slice.tag().assert_eq(tag)?;
-                        tagged_slice.decode_nested(|decoder| {
-                            #decode_fields
+                            fn try_from(tagged_slice: flexiber::TaggedSlice<'a>) -> flexiber::Result<Self> {
+                                use core::convert::TryInto;
+                                use flexiber::TagLike;
+                                let tag = ::flexiber::Tag::from(
+                                    flexiber::Class::try_from(#class).unwrap(),
+                                    #constructed,
+                                    #tag_number
+                                );
+                                tagged_slice.tag().assert_eq(tag)?;
+                                tagged_slice.decode_nested(|decoder| {
+                                    #decode_fields
 
-                            Ok(Self { #decode_result })
-                        })
-                    }
+                                    Ok(Self { #decode_result })
+                                })
+                            }
+                        }
+                    })
                 }
-            })
+                Tag::Simple(tag) => {
+                    let tag = tag.0;
+                    s.gen_impl(quote! {
+                        gen impl<'a> Decodable<'a> for @Self {
+                            fn decode(decoder: &mut Decoder<'a>) -> Result<Self> {
+                                flexiber::TaggedSlice::<'a, flexiber::SimpleTag>::decode(decoder)
+                                    .and_then(|tagged_slice| {
+                                        use core::convert::TryInto;
+                                        use flexiber::TagLike;
+                                        tagged_slice.tag().assert_eq(flexiber::SimpleTag::try_from(#tag).unwrap())?;
+                                        tagged_slice.decode_nested(|decoder| {
+                                            #decode_fields
+
+                                            Ok(Self { #decode_result })
+                                        })
+                                    })
+                                    .or_else(|e| decoder.error(e.kind()))
+                            }
+
+                        }
+                    })
+                }
+            }
         } else {
             s.gen_impl(quote! {
                 gen impl<'a> flexiber::Decodable<'a> for @Self {

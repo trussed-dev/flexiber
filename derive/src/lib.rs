@@ -68,10 +68,37 @@ fn derive_encodable(s: Structure<'_>) -> TokenStream {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-struct Tag {
+struct BerTag {
     class: Class,
     constructed: bool,
     number: u16,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+struct SimpleTag(u8);
+
+#[derive(Clone, Copy, Debug)]
+enum Tag {
+    Ber(BerTag),
+    Simple(SimpleTag),
+}
+
+impl From<BerTag> for Tag {
+    fn from(tag: BerTag) -> Self {
+        Self::Ber(tag)
+    }
+}
+
+impl From<SimpleTag> for Tag {
+    fn from(tag: SimpleTag) -> Self {
+        Self::Simple(tag)
+    }
+}
+
+impl Default for Tag {
+    fn default() -> Self {
+        Self::Ber(BerTag::default())
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -135,17 +162,53 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<Tag>
                             if path.is_ident("slice") {
                                 slice = true;
                             } else if path.is_ident("universal") {
-                                tag.class = Class::Universal;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.class = Class::Universal;
+                                    tag.into()
+                                };
                             } else if path.is_ident("application") {
-                                tag.class = Class::Application;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.class = Class::Application;
+                                    tag.into()
+                                };
                             } else if path.is_ident("context") {
-                                tag.class = Class::Context;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.class = Class::Context;
+                                    tag.into()
+                                };
                             } else if path.is_ident("private") {
-                                tag.class = Class::Private;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.class = Class::Private;
+                                    tag.into()
+                                };
                             } else if path.is_ident("constructed") {
-                                tag.constructed = true;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.constructed = true;
+                                    tag.into()
+                                };
                             } else if path.is_ident("primitive") {
-                                tag.constructed = false;
+                                tag = {
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.constructed = false;
+                                    tag.into()
+                                };
                             } else {
                                 panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
                             }
@@ -156,15 +219,34 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<Tag>
                             ..
                         })) => {
                             // Parse the `type = "..."` attribute
-                            if !path.is_ident("number") {
+                            if path.is_ident("number") {
+                                tag = {
+                                    let possibly_with_prefix = lit_str.value();
+                                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
+                                    let tag_number = u16::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
+                                    let mut tag = if let Tag::Ber(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.number = tag_number;
+                                    tag_number_is_set = true;
+                                    tag.into()
+                                }
+                            } else if path.is_ident("simple") {
+                                tag = {
+                                    let possibly_with_prefix = lit_str.value();
+                                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
+                                    let tag_number = u8::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
+                                    let mut tag = if let Tag::Simple(tag) = tag {
+                                        tag
+                                    } else { Default::default() };
+                                    tag.0 = tag_number;
+                                    tag_number_is_set = true;
+                                    tag.into()
+                                };
+                            } else {
                                 panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
                             }
 
-                            let possibly_with_prefix = lit_str.value();
-                            let without_prefix = possibly_with_prefix.trim_start_matches("0x");
-                            let tag_number = u16::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
-                            tag.number = tag_number;
-                            tag_number_is_set = true;
                         }
                         other => panic!(
                             "a malformed `tlv` attribute for field `{}`: {:?}",

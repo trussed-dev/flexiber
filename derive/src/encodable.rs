@@ -38,14 +38,26 @@ impl DeriveEncodableStruct {
         let field_name = &field.name;
         let tag = field.tag;
 
-        let class = tag.class as u8;
-        let constructed = tag.constructed;
-        let tag_number = tag.number;
+        let field_encoder = match tag {
+            Tag::Ber(tag) => {
+                let class = tag.class as u8;
+                let constructed = tag.constructed;
+                let tag_number = tag.number;
 
-        let field_encoder = if field.slice {
-            quote! { &(::flexiber::TaggedSlice::from(flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number), &self.#field_name)?), }
-        } else {
-            quote! { &(::flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number).with_value(&self.#field_name)), }
+                if field.slice {
+                    quote! { &(::flexiber::TaggedSlice::from(flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number), &self.#field_name)?), }
+                } else {
+                    quote! { &(::flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number).with_value(&self.#field_name)), }
+                }
+            }
+            Tag::Simple(tag) => {
+                let field_tag = tag.0;
+                if field.slice {
+                    quote! { &(::flexiber::TaggedSlice::from(flexiber::SimpleTag::try_from(#field_tag).unwrap(), &self.#field_name)?), }
+                } else {
+                    quote! { &(::flexiber::SimpleTag::try_from(#field_tag).unwrap().with_value(&self.#field_name)), }
+                }
+            }
         };
         field_encoder.to_tokens(&mut self.encode_fields);
     }
@@ -57,28 +69,53 @@ impl DeriveEncodableStruct {
         let encode_fields = self.encode_fields;
 
         if let Some(tag) = tag {
-            let class = tag.class as u8;
-            let constructed = tag.constructed;
-            let tag_number = tag.number;
-            s.gen_impl(quote! {
-                gen impl flexiber::Tagged for @Self {
-                    fn tag() -> flexiber::Tag {
-                        // TODO(nickray): FIXME FIXME
-                        use core::convert::TryFrom;
-                        flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number)
-                    }
-                }
+            match tag {
+                Tag::Ber(tag) => {
+                    let class = tag.class as u8;
+                    let constructed = tag.constructed;
+                    let tag_number = tag.number;
+                    s.gen_impl(quote! {
+                        gen impl flexiber::Tagged for @Self {
+                            fn tag() -> flexiber::Tag {
+                                // TODO(nickray): FIXME FIXME
+                                use core::convert::TryFrom;
+                                flexiber::Tag::from(flexiber::Class::try_from(#class).unwrap(), #constructed, #tag_number)
+                            }
+                        }
 
-                gen impl flexiber::Container for @Self {
-                    fn fields<F, T>(&self, field_encoder: F) -> flexiber::Result<T>
-                    where
-                        F: FnOnce(&[&dyn flexiber::Encodable]) -> flexiber::Result<T>,
-                    {
-                        use core::convert::TryFrom;
-                        field_encoder(&[#encode_fields])
-                    }
+                        gen impl flexiber::Container for @Self {
+                            fn fields<F, T>(&self, field_encoder: F) -> flexiber::Result<T>
+                            where
+                                F: FnOnce(&[&dyn flexiber::Encodable]) -> flexiber::Result<T>,
+                            {
+                                use core::convert::TryFrom;
+                                field_encoder(&[#encode_fields])
+                            }
+                        }
+                    })
                 }
-            })
+                Tag::Simple(tag) => {
+                    let tag = tag.0;
+                    s.gen_impl(quote! {
+                        gen impl flexiber::Tagged for @Self {
+                            fn tag() -> flexiber::Tag {
+                                use core::convert::TryFrom;
+                                flexiber::Tag::try_from(#tag).unwrap()
+                            }
+                        }
+
+                        gen impl flexiber::Container for @Self {
+                            fn fields<F, T>(&self, field_encoder: F) -> flexiber::Result<T>
+                            where
+                                F: FnOnce(&[&dyn flexiber::Encodable]) -> flexiber::Result<T>,
+                            {
+                                use core::convert::TryFrom;
+                                field_encoder(&[#encode_fields])
+                            }
+                        }
+                    })
+                }
+            }
         } else {
             s.gen_impl(quote! {
                 gen impl flexiber::Container for @Self {
