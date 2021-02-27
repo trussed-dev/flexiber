@@ -236,6 +236,7 @@
 <span id="233">233</span>
 <span id="234">234</span>
 <span id="235">235</span>
+<span id="236">236</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>}, <span class="ident">fmt</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TaggedValue</span>};
@@ -251,6 +252,7 @@
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="attribute">#[<span class="ident">repr</span>(<span class="ident">u8</span>)]</span>
+<span class="doccomment">/// Class of BER tag.</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Class</span> {
     <span class="ident">Universal</span> <span class="op">=</span> <span class="number">0b00</span>,
     <span class="ident">Application</span> <span class="op">=</span> <span class="number">0b01</span>,

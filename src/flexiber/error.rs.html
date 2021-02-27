@@ -301,7 +301,7 @@
         <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">kind</span>)<span class="question-mark">?</span>;
 
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pos</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">position</span> {
-            <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot; at SIMPLE-TLV byte {}&quot;</span>, <span class="ident">pos</span>)<span class="question-mark">?</span>;
+            <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot; at BER-TLV byte {}&quot;</span>, <span class="ident">pos</span>)<span class="question-mark">?</span>;
         }
 
         <span class="prelude-val">Ok</span>(())
@@ -376,7 +376,7 @@
     <span class="doccomment">/// Integer overflow occurred (library bug!)</span>
     <span class="ident">Overflow</span>,
 
-    <span class="doccomment">/// Message is longer than SIMPLE-TLV&#39;s limits support</span>
+    <span class="doccomment">/// Message is longer than BER-TLV&#39;s limits support</span>
     <span class="ident">Overlength</span>,
 
     <span class="doccomment">/// Undecoded trailing data at end of message</span>
@@ -448,28 +448,28 @@
             <span class="ident">ErrorKind</span>::<span class="ident">InvalidClass</span> { <span class="ident">value</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid class {}&quot;</span>, <span class="ident">value</span>),
             <span class="ident">ErrorKind</span>::<span class="ident">InvalidLength</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;length greater than protocol maximum&quot;</span>),
             <span class="ident">ErrorKind</span>::<span class="ident">InvalidTag</span> { <span class="ident">byte</span> } <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid SIMPLE-TLV tag: 0x{:02x}&quot;</span>, <span class="ident">byte</span>)
+                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;invalid BER-TLV tag: 0x{:02x}&quot;</span>, <span class="ident">byte</span>)
             }
             <span class="ident">ErrorKind</span>::<span class="ident">Length</span> { <span class="ident">tag</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;incorrect length for {}&quot;</span>, <span class="ident">tag</span>),
             <span class="comment">// ErrorKind::Noncanonical =&gt; write!(f, &quot;DER is not canonically encoded&quot;),</span>
             <span class="comment">// ErrorKind::Oid =&gt; write!(f, &quot;malformed OID&quot;),</span>
             <span class="ident">ErrorKind</span>::<span class="ident">Overflow</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;integer overflow&quot;</span>),
-            <span class="ident">ErrorKind</span>::<span class="ident">Overlength</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;SIMPLE-TLV message is too long&quot;</span>),
+            <span class="ident">ErrorKind</span>::<span class="ident">Overlength</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;BER-TLV message is too long&quot;</span>),
             <span class="ident">ErrorKind</span>::<span class="ident">TrailingData</span> { <span class="ident">decoded</span>, <span class="ident">remaining</span> } <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">write</span><span class="macro">!</span>(
                     <span class="ident">f</span>,
-                    <span class="string">&quot;trailing data at end of SIMPLE-TLV message: decoded {} bytes, {} bytes remaining&quot;</span>,
+                    <span class="string">&quot;trailing data at end of BER-TLV message: decoded {} bytes, {} bytes remaining&quot;</span>,
                     <span class="ident">decoded</span>, <span class="ident">remaining</span>
                 )
             }
-            <span class="ident">ErrorKind</span>::<span class="ident">Truncated</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;SIMPLE-TLV message is truncated&quot;</span>),
+            <span class="ident">ErrorKind</span>::<span class="ident">Truncated</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;BER-TLV message is truncated&quot;</span>),
             <span class="ident">ErrorKind</span>::<span class="ident">Underlength</span> { <span class="ident">expected</span>, <span class="ident">actual</span> } <span class="op">=</span><span class="op">&gt;</span> <span class="macro">write</span><span class="macro">!</span>(
                 <span class="ident">f</span>,
-                <span class="string">&quot;SIMPLE-TLV message too short: expected {}, got {}&quot;</span>,
+                <span class="string">&quot;BER-TLV message too short: expected {}, got {}&quot;</span>,
                 <span class="ident">expected</span>, <span class="ident">actual</span>
             ),
             <span class="ident">ErrorKind</span>::<span class="ident">UnexpectedTag</span> { <span class="ident">expected</span>, <span class="ident">actual</span> } <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;unexpected SIMPLE-TLV tag: &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;unexpected BER-TLV tag: &quot;</span>)<span class="question-mark">?</span>;
 
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">tag</span>) <span class="op">=</span> <span class="ident">expected</span> {
                     <span class="macro">write</span><span class="macro">!</span>(<span class="ident">f</span>, <span class="string">&quot;expected {}, &quot;</span>, <span class="ident">tag</span>)<span class="question-mark">?</span>;

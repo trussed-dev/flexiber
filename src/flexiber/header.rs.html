@@ -59,12 +59,12 @@
 <span id="56">56</span>
 <span id="57">57</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="doccomment">//! SIMPLE-TLV headers.</span>
+<span class="doccomment">//! BER-TLV headers.</span>
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TagLike</span>};
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryInto</span>;
 
-<span class="doccomment">/// SIMPLE-TLV headers: tag + length component of TLV-encoded values</span>
+<span class="doccomment">/// BER-TLV headers: tag + length component of TLV-encoded values</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Header</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Tag representing the type of the encoded value</span>

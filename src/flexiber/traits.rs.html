@@ -629,10 +629,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Additionally, the encoded length needs to be known without actually encoding.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Encodable</span> {
-    <span class="doccomment">/// Compute the length of this value in bytes when encoded as SIMPLE-TLV</span>
+    <span class="doccomment">/// Compute the length of this value in bytes when encoded as BER-TLV</span>
     <span class="kw">fn</span> <span class="ident">encoded_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Length</span><span class="op">&gt;</span>;
 
-    <span class="doccomment">/// Encode this value as SIMPLE-TLV using the provided [`Encoder`].</span>
+    <span class="doccomment">/// Encode this value as BER-TLV using the provided [`Encoder`].</span>
     <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">encoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Encoder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
 
     <span class="doccomment">/// Encode this value to the provided byte slice, returning a sub-slice</span>
@@ -643,7 +643,7 @@
         <span class="prelude-val">Ok</span>(<span class="ident">encoder</span>.<span class="ident">finish</span>()<span class="question-mark">?</span>)
     }
 
-    <span class="doccomment">/// Encode this message as SIMPLE-TLV, appending it to the provided</span>
+    <span class="doccomment">/// Encode this message as BER-TLV, appending it to the provided</span>
     <span class="doccomment">/// byte vector.</span>
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>)]</span>
     <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">docsrs</span>, <span class="ident">doc</span>(<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;alloc&quot;</span>)))]</span>
@@ -687,7 +687,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Separate trait because the generic parameter `N` would make `Encodable` not object safe.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">EncodableHeapless</span>: <span class="ident">Encodable</span> {
-    <span class="doccomment">/// Encode this message as SIMPLE-TLV, appending it to the provided</span>
+    <span class="doccomment">/// Encode this message as BER-TLV, appending it to the provided</span>
     <span class="doccomment">/// heapless byte vector.</span>
     <span class="kw">fn</span> <span class="ident">encode_to_heapless_vec</span><span class="op">&lt;</span><span class="ident">N</span>: <span class="ident">heapless</span>::<span class="ident">ArrayLength</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">heapless</span>::<span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">N</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Length</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">expected_len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">encoded_length</span>()<span class="question-mark">?</span>.<span class="ident">to_usize</span>();
@@ -727,13 +727,13 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">X</span><span class="op">&gt;</span> <span class="ident">Taggable</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">X</span> <span class="kw">where</span> <span class="ident">X</span>: <span class="ident">Sized</span>, <span class="ident">T</span>: <span class="ident">TagLike</span> {}
 
-<span class="comment">// /// Types with an associated SIMPLE-TLV [`Tag`].</span>
+<span class="comment">// /// Types with an associated BER-TLV [`Tag`].</span>
 <span class="comment">// pub trait Tagged {</span>
-<span class="comment">//     /// SIMPLE-TLV tag</span>
+<span class="comment">//     /// BER-TLV tag</span>
 <span class="comment">//     const TAG: Tag;</span>
 <span class="comment">// }</span>
 
-<span class="doccomment">/// Types with an associated SIMPLE-TLV [`Tag`].</span>
+<span class="doccomment">/// Types with an associated BER-TLV [`Tag`].</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// A tagged type implementing `Container` has a blanked implementation of `Encodable`.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Tagged</span> {
@@ -777,17 +777,17 @@
     }
 }
 
-<span class="comment">///// Multiple encodables, nested under a SIMPLE-TLV tag.</span>
+<span class="comment">///// Multiple encodables, nested under a BER-TLV tag.</span>
 <span class="comment">/////</span>
-<span class="comment">///// This wraps up a common pattern for SIMPLE-TLV encoding.</span>
+<span class="comment">///// This wraps up a common pattern for BER-TLV encoding.</span>
 <span class="comment">///// Implementations obtain a blanket `Encodable` implementation</span>
 <span class="comment">//pub trait TaggedContainer: Container + Tagged {}</span>
 
 <span class="comment">//pub trait Untagged {}</span>
 
-<span class="comment">///// Multiple encodables, side-by-side without a SIMPLE-TLV tag.</span>
+<span class="comment">///// Multiple encodables, side-by-side without a BER-TLV tag.</span>
 <span class="comment">/////</span>
-<span class="comment">///// This wraps up a common pattern for SIMPLE-TLV encoding.</span>
+<span class="comment">///// This wraps up a common pattern for BER-TLV encoding.</span>
 <span class="comment">///// Implementations obtain a blanket `Encodable` implementation</span>
 <span class="comment">//pub trait UntaggedContainer: Container + Untagged {}</span>
 
@@ -827,7 +827,7 @@
         <span class="self">self</span>.<span class="ident">len</span>().<span class="ident">try_into</span>()
     }
 
-    <span class="doccomment">/// Encode this value as SIMPLE-TLV using the provided [`Encoder`].</span>
+    <span class="doccomment">/// Encode this value as BER-TLV using the provided [`Encoder`].</span>
     <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">encoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Encoder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="ident">encoder</span>.<span class="ident">bytes</span>(<span class="self">self</span>)
     }
@@ -841,7 +841,7 @@
                     <span class="prelude-val">Ok</span>((<span class="macro-nonterminal">$</span><span class="macro-nonterminal">N</span> <span class="kw">as</span> <span class="ident">u8</span>).<span class="ident">into</span>())
                 }
 
-                <span class="doccomment">/// Encode this value as SIMPLE-TLV using the provided [`Encoder`].</span>
+                <span class="doccomment">/// Encode this value as BER-TLV using the provided [`Encoder`].</span>
                 <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">encoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Encoder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
                     <span class="ident">encoder</span>.<span class="ident">bytes</span>(<span class="self">self</span>.<span class="ident">as_ref</span>())
                 }
@@ -877,7 +877,7 @@
     <span class="comment">// a byte slice, but also that thye can declare their encoded length.</span>
     <span class="comment">//</span>
     <span class="comment">// The goal then is to tag the struct definition for a proc-macro that implements</span>
-    <span class="comment">// nested SIMPLE-TLV objects (as this is what we need in PIV return values)</span>
+    <span class="comment">// nested BER-TLV objects (as this is what we need in PIV return values)</span>
 
     <span class="comment">// tag 0xAA</span>
     <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>

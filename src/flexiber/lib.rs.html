@@ -55,9 +55,6 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
-<span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # flexiber</span>
 <span class="doccomment">//!</span>
@@ -69,10 +66,7 @@
 <span class="doccomment">//! inconveniently packed as a single PDF in a ZIP file :)</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Credits</span>
-<span class="doccomment">//! This library is a remix of `RustCrypto/utils/der`, with a view towards:</span>
-<span class="doccomment">//! - not requiring references to ASN.1 (e.g., since SIMPLE-TLV does not have any)</span>
-<span class="doccomment">//! - not requiring allocations or memmoves (like ring, derp, x509:der)</span>
-<span class="doccomment">//! - adding a type layer on top of SIMPLE-TLV&#39;s byte slice values</span>
+<span class="doccomment">//! This library is a remix of `RustCrypto/utils/der`.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The core idea taken from `der` is to have `Encodable` require an `encoded_length` method.</span>
 <span class="doccomment">//! By calling this recursively in a first pass, allocations required in other approaches are</span>

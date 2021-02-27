@@ -217,14 +217,14 @@
 
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">ErrorKind</span>, <span class="ident">header</span>::<span class="ident">Header</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">Slice</span>, <span class="ident">Tag</span>, <span class="ident">TagLike</span>};
 
-<span class="doccomment">/// SIMPLE-TLV data object.</span>
+<span class="doccomment">/// BER-TLV data object.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>, <span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="ident">V</span>, <span class="ident">T</span><span class="op">=</span><span class="ident">Tag</span><span class="op">&gt;</span> {
     <span class="ident">tag</span>: <span class="ident">T</span>,
     <span class="ident">value</span>: <span class="ident">V</span>,
 }
 
-<span class="doccomment">/// Raw SIMPLE-TLV data object `TaggedValue&lt;Slice&lt;&#39;_&gt;&gt;`.</span>
+<span class="doccomment">/// Raw BER-TLV data object `TaggedValue&lt;Slice&lt;&#39;_&gt;&gt;`.</span>
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">TaggedSlice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">=</span><span class="ident">Tag</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="ident">Slice</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>, <span class="ident">T</span><span class="op">&gt;</span>;
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">V</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="ident">V</span>, <span class="ident">T</span><span class="op">&gt;</span>
@@ -294,7 +294,7 @@
         <span class="self">self</span>.<span class="ident">value</span>.<span class="ident">is_empty</span>()
     }
 
-    <span class="doccomment">/// Get the SIMPLE-TLV [`Header`] for this [`TaggedSlice`] value</span>
+    <span class="doccomment">/// Get the BER-TLV [`Header`] for this [`TaggedSlice`] value</span>
     <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">unnecessary_wraps</span>)]</span>
     <span class="kw">fn</span> <span class="ident">header</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Header</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">Header</span> {

@@ -250,7 +250,7 @@
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert</span>::<span class="ident">TryFrom</span>, <span class="ident">fmt</span>, <span class="ident">ops</span>::<span class="ident">Add</span>};
 
-<span class="doccomment">/// SIMPLE-TLV-encoded length.</span>
+<span class="doccomment">/// BER-TLV-encoded length.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// By definition, in the range `0..=65535`</span>
 <span class="doccomment">///</span>
@@ -268,7 +268,7 @@
         <span class="ident">Length</span>(<span class="number">0</span>)
     }
 
-    <span class="doccomment">/// Get the maximum length supported by SIMPLE-TLV: 65,535.</span>
+    <span class="doccomment">/// Get the maximum length supported by BER-TLV: 65,535.</span>
     <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">max</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">usize</span> {
         <span class="ident">u16</span>::<span class="ident">MAX</span> <span class="kw">as</span> <span class="ident">usize</span>
     }
