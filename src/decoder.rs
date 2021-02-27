@@ -1,7 +1,7 @@
 use core::convert::TryInto;
 use crate::{Decodable, ErrorKind, Length, Result, TagLike};
 
-/// SIMPLE-TLV decoder.
+/// BER-TLV decoder.
 #[derive(Debug)]
 pub struct Decoder<'a> {
     /// Byte slice being decoded.

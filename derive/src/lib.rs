@@ -275,6 +275,6 @@ fn extract_attrs(name: &Ident, attrs: &[Attribute]) -> (Tag, bool) {
     if let Some(tag) = tag {
         (tag, slice)
     } else {
-        panic!("SIMPLE-TLV tag missing for `{}`", name);
+        panic!("BER-TLV tag missing for `{}`", name);
     }
 }

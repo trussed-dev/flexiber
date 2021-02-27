@@ -8,10 +8,7 @@
 //! inconveniently packed as a single PDF in a ZIP file :)
 //!
 //! ## Credits
-//! This library is a remix of `RustCrypto/utils/der`, with a view towards:
-//! - not requiring references to ASN.1 (e.g., since SIMPLE-TLV does not have any)
-//! - not requiring allocations or memmoves (like ring, derp, x509:der)
-//! - adding a type layer on top of SIMPLE-TLV's byte slice values
+//! This library is a remix of `RustCrypto/utils/der`.
 //!
 //! The core idea taken from `der` is to have `Encodable` require an `encoded_length` method.
 //! By calling this recursively in a first pass, allocations required in other approaches are

@@ -12,6 +12,7 @@ const NOT_LAST_TAG_OCTET_FLAG: u8 = 1u8 << 7;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
+/// Class of BER tag.
 pub enum Class {
     Universal = 0b00,
     Application = 0b01,

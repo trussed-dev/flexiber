@@ -1,9 +1,9 @@
-//! SIMPLE-TLV headers.
+//! BER-TLV headers.
 
 use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, Length, Result, TagLike};
 use core::convert::TryInto;
 
-/// SIMPLE-TLV headers: tag + length component of TLV-encoded values
+/// BER-TLV headers: tag + length component of TLV-encoded values
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub(crate) struct Header<T> {
     /// Tag representing the type of the encoded value

@@ -48,10 +48,10 @@ where
 ///
 /// Additionally, the encoded length needs to be known without actually encoding.
 pub trait Encodable {
-    /// Compute the length of this value in bytes when encoded as SIMPLE-TLV
+    /// Compute the length of this value in bytes when encoded as BER-TLV
     fn encoded_length(&self) -> Result<Length>;
 
-    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    /// Encode this value as BER-TLV using the provided [`Encoder`].
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()>;
 
     /// Encode this value to the provided byte slice, returning a sub-slice
@@ -62,7 +62,7 @@ pub trait Encodable {
         Ok(encoder.finish()?)
     }
 
-    /// Encode this message as SIMPLE-TLV, appending it to the provided
+    /// Encode this message as BER-TLV, appending it to the provided
     /// byte vector.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
@@ -106,7 +106,7 @@ pub trait Encodable {
 ///
 /// Separate trait because the generic parameter `N` would make `Encodable` not object safe.
 pub trait EncodableHeapless: Encodable {
-    /// Encode this message as SIMPLE-TLV, appending it to the provided
+    /// Encode this message as BER-TLV, appending it to the provided
     /// heapless byte vector.
     fn encode_to_heapless_vec<N: heapless::ArrayLength<u8>>(&self, buf: &mut heapless::Vec<u8, N>) -> Result<Length> {
         let expected_len = self.encoded_length()?.to_usize();
@@ -146,13 +146,13 @@ pub(crate) trait Taggable<T: TagLike>: Sized {
 
 impl<T, X> Taggable<T> for X where X: Sized, T: TagLike {}
 
-// /// Types with an associated SIMPLE-TLV [`Tag`].
+// /// Types with an associated BER-TLV [`Tag`].
 // pub trait Tagged {
-//     /// SIMPLE-TLV tag
+//     /// BER-TLV tag
 //     const TAG: Tag;
 // }
 
-/// Types with an associated SIMPLE-TLV [`Tag`].
+/// Types with an associated BER-TLV [`Tag`].
 ///
 /// A tagged type implementing `Container` has a blanked implementation of `Encodable`.
 pub trait Tagged {
@@ -196,17 +196,17 @@ where
     }
 }
 
-///// Multiple encodables, nested under a SIMPLE-TLV tag.
+///// Multiple encodables, nested under a BER-TLV tag.
 /////
-///// This wraps up a common pattern for SIMPLE-TLV encoding.
+///// This wraps up a common pattern for BER-TLV encoding.
 ///// Implementations obtain a blanket `Encodable` implementation
 //pub trait TaggedContainer: Container + Tagged {}
 
 //pub trait Untagged {}
 
-///// Multiple encodables, side-by-side without a SIMPLE-TLV tag.
+///// Multiple encodables, side-by-side without a BER-TLV tag.
 /////
-///// This wraps up a common pattern for SIMPLE-TLV encoding.
+///// This wraps up a common pattern for BER-TLV encoding.
 ///// Implementations obtain a blanket `Encodable` implementation
 //pub trait UntaggedContainer: Container + Untagged {}
 
@@ -246,7 +246,7 @@ impl<'a> Encodable for &'a [u8] {
         self.len().try_into()
     }
 
-    /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+    /// Encode this value as BER-TLV using the provided [`Encoder`].
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
         encoder.bytes(self)
     }
@@ -260,7 +260,7 @@ macro_rules! impl_array {
                     Ok(($N as u8).into())
                 }
 
-                /// Encode this value as SIMPLE-TLV using the provided [`Encoder`].
+                /// Encode this value as BER-TLV using the provided [`Encoder`].
                 fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
                     encoder.bytes(self.as_ref())
                 }
@@ -296,7 +296,7 @@ mod tests {
     // a byte slice, but also that thye can declare their encoded length.
     //
     // The goal then is to tag the struct definition for a proc-macro that implements
-    // nested SIMPLE-TLV objects (as this is what we need in PIV return values)
+    // nested BER-TLV objects (as this is what we need in PIV return values)
 
     // tag 0xAA
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]

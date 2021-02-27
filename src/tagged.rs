@@ -3,14 +3,14 @@
 
 use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag, TagLike};
 
-/// SIMPLE-TLV data object.
+/// BER-TLV data object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TaggedValue<V, T=Tag> {
     tag: T,
     value: V,
 }
 
-/// Raw SIMPLE-TLV data object `TaggedValue<Slice<'_>>`.
+/// Raw BER-TLV data object `TaggedValue<Slice<'_>>`.
 pub type TaggedSlice<'a, T=Tag> = TaggedValue<Slice<'a>, T>;
 
 impl<V, T> TaggedValue<V, T>
@@ -80,7 +80,7 @@ where
         self.value.is_empty()
     }
 
-    /// Get the SIMPLE-TLV [`Header`] for this [`TaggedSlice`] value
+    /// Get the BER-TLV [`Header`] for this [`TaggedSlice`] value
     #[allow(clippy::unnecessary_wraps)]
     fn header(&self) -> Result<Header<T>> {
         Ok(Header {

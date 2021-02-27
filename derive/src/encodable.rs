@@ -89,6 +89,7 @@ impl DeriveEncodableStruct {
                                 F: FnOnce(&[&dyn flexiber::Encodable]) -> flexiber::Result<T>,
                             {
                                 use core::convert::TryFrom;
+                                use flexiber::TagLike;
                                 field_encoder(&[#encode_fields])
                             }
                         }
@@ -110,6 +111,7 @@ impl DeriveEncodableStruct {
                                 F: FnOnce(&[&dyn flexiber::Encodable]) -> flexiber::Result<T>,
                             {
                                 use core::convert::TryFrom;
+                                use flexiber::TagLike;
                                 field_encoder(&[#encode_fields])
                             }
                         }

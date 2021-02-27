@@ -18,7 +18,7 @@ pub(crate) fn encoded_length_inner(encodables: &[&dyn Encodable]) -> Result<Leng
         })
 }
 
-/// Nested SIMPLE-TLV data objects.
+/// Nested BER-TLV data objects.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Nested<'a> {
     /// Tag

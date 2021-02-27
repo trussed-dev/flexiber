@@ -3,7 +3,7 @@
 use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Result};
 use core::{convert::TryFrom, fmt, ops::Add};
 
-/// SIMPLE-TLV-encoded length.
+/// BER-TLV-encoded length.
 ///
 /// By definition, in the range `0..=65535`
 ///
@@ -21,7 +21,7 @@ impl Length {
         Length(0)
     }
 
-    /// Get the maximum length supported by SIMPLE-TLV: 65,535.
+    /// Get the maximum length supported by BER-TLV: 65,535.
     pub const fn max() -> usize {
         u16::MAX as usize
     }

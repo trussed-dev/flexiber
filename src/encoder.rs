@@ -1,10 +1,10 @@
 use core::convert::{TryFrom, TryInto};
 use crate::{Encodable, ErrorKind, header::Header, Length, Result, Tag};
 
-/// SIMPLE-TLV encoder.
+/// BER-TLV encoder.
 #[derive(Debug)]
 pub struct Encoder<'a> {
-    /// Buffer into which SIMPLE-TLV-encoded message is written
+    /// Buffer into which BER-TLV-encoded message is written
     bytes: Option<&'a mut [u8]>,
 
     /// Total number of bytes written to buffer so far

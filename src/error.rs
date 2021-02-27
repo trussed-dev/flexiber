@@ -55,7 +55,7 @@ impl fmt::Display for Error {
         write!(f, "{}", self.kind)?;
 
         if let Some(pos) = self.position {
-            write!(f, " at SIMPLE-TLV byte {}", pos)?;
+            write!(f, " at BER-TLV byte {}", pos)?;
         }
 
         Ok(())
@@ -130,7 +130,7 @@ pub enum ErrorKind {
     /// Integer overflow occurred (library bug!)
     Overflow,
 
-    /// Message is longer than SIMPLE-TLV's limits support
+    /// Message is longer than BER-TLV's limits support
     Overlength,
 
     /// Undecoded trailing data at end of message
@@ -202,28 +202,28 @@ impl fmt::Display for ErrorKind {
             ErrorKind::InvalidClass { value } => write!(f, "invalid class {}", value),
             ErrorKind::InvalidLength => write!(f, "length greater than protocol maximum"),
             ErrorKind::InvalidTag { byte } => {
-                write!(f, "invalid SIMPLE-TLV tag: 0x{:02x}", byte)
+                write!(f, "invalid BER-TLV tag: 0x{:02x}", byte)
             }
             ErrorKind::Length { tag } => write!(f, "incorrect length for {}", tag),
             // ErrorKind::Noncanonical => write!(f, "DER is not canonically encoded"),
             // ErrorKind::Oid => write!(f, "malformed OID"),
             ErrorKind::Overflow => write!(f, "integer overflow"),
-            ErrorKind::Overlength => write!(f, "SIMPLE-TLV message is too long"),
+            ErrorKind::Overlength => write!(f, "BER-TLV message is too long"),
             ErrorKind::TrailingData { decoded, remaining } => {
                 write!(
                     f,
-                    "trailing data at end of SIMPLE-TLV message: decoded {} bytes, {} bytes remaining",
+                    "trailing data at end of BER-TLV message: decoded {} bytes, {} bytes remaining",
                     decoded, remaining
                 )
             }
-            ErrorKind::Truncated => write!(f, "SIMPLE-TLV message is truncated"),
+            ErrorKind::Truncated => write!(f, "BER-TLV message is truncated"),
             ErrorKind::Underlength { expected, actual } => write!(
                 f,
-                "SIMPLE-TLV message too short: expected {}, got {}",
+                "BER-TLV message too short: expected {}, got {}",
                 expected, actual
             ),
             ErrorKind::UnexpectedTag { expected, actual } => {
-                write!(f, "unexpected SIMPLE-TLV tag: ")?;
+                write!(f, "unexpected BER-TLV tag: ")?;
 
                 if let Some(tag) = expected {
                     write!(f, "expected {}, ", tag)?;
