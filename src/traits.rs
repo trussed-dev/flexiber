@@ -137,6 +137,9 @@ pub trait EncodableHeapless: Encodable {
     }
 }
 
+#[cfg(feature = "heapless")]
+impl<X> EncodableHeapless for X where X: Encodable {}
+
 /// Types that can be tagged.
 pub(crate) trait Taggable<T: TagLike>: Sized {
     fn tagged(&self, tag: T) -> TaggedValue<&Self, T> {
@@ -241,7 +244,7 @@ where
 //     }
 // }
 
-impl<'a> Encodable for &'a [u8] {
+impl Encodable for &[u8] {
     fn encoded_length(&self) -> Result<Length> {
         self.len().try_into()
     }
@@ -249,6 +252,23 @@ impl<'a> Encodable for &'a [u8] {
     /// Encode this value as BER-TLV using the provided [`Encoder`].
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
         encoder.bytes(self)
+    }
+}
+
+impl Encodable for Option<&[u8]> {
+    fn encoded_length(&self) -> Result<Length> {
+        match self {
+            Some(slice) => slice.encoded_length(),
+            None => Ok(Length::zero()),
+        }
+    }
+
+    /// Encode this value as BER-TLV using the provided [`Encoder`].
+    fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+        match self {
+            Some(slice) => encoder.bytes(slice),
+            None => Ok(())
+        }
     }
 }
 
