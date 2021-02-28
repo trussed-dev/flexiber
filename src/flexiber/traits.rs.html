@@ -578,6 +578,26 @@
 <span id="575">575</span>
 <span id="576">576</span>
 <span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// pub use der::{Decodable, Encodable};</span>
 <span class="doccomment">//! Trait definitions</span>
@@ -718,6 +738,9 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;heapless&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">X</span><span class="op">&gt;</span> <span class="ident">EncodableHeapless</span> <span class="kw">for</span> <span class="ident">X</span> <span class="kw">where</span> <span class="ident">X</span>: <span class="ident">Encodable</span> {}
+
 <span class="doccomment">/// Types that can be tagged.</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait</span> <span class="ident">Taggable</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">TagLike</span><span class="op">&gt;</span>: <span class="ident">Sized</span> {
     <span class="kw">fn</span> <span class="ident">tagged</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">tag</span>: <span class="ident">T</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TaggedValue</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="self">Self</span>, <span class="ident">T</span><span class="op">&gt;</span> {
@@ -822,7 +845,7 @@
 <span class="comment">//     }</span>
 <span class="comment">// }</span>
 
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">u8</span>] {
+<span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="kw-2">&amp;</span>[<span class="ident">u8</span>] {
     <span class="kw">fn</span> <span class="ident">encoded_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Length</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">len</span>().<span class="ident">try_into</span>()
     }
@@ -830,6 +853,23 @@
     <span class="doccomment">/// Encode this value as BER-TLV using the provided [`Encoder`].</span>
     <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">encoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Encoder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="ident">encoder</span>.<span class="ident">bytes</span>(<span class="self">self</span>)
+    }
+}
+
+<span class="kw">impl</span> <span class="ident">Encodable</span> <span class="kw">for</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span>[<span class="ident">u8</span>]<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">encoded_length</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Length</span><span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">slice</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">slice</span>.<span class="ident">encoded_length</span>(),
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Length</span>::<span class="ident">zero</span>()),
+        }
+    }
+
+    <span class="doccomment">/// Encode this value as BER-TLV using the provided [`Encoder`].</span>
+    <span class="kw">fn</span> <span class="ident">encode</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">encoder</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Encoder</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">slice</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">encoder</span>.<span class="ident">bytes</span>(<span class="ident">slice</span>),
+            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(())
+        }
     }
 }
 
