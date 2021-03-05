@@ -55,6 +55,12 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! # flexiber</span>
 <span class="doccomment">//!</span>
@@ -109,6 +115,12 @@
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">traits</span>::{<span class="ident">Container</span>, <span class="ident">Decodable</span>, <span class="ident">Encodable</span>, <span class="ident">Tagged</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;heapless&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">traits</span>::<span class="ident">EncodableHeapless</span>;
+
+<span class="comment">// #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]</span>
+<span class="comment">// struct T2&lt;&#39;a&gt; {</span>
+<span class="comment">//     #[tlv(simple = &quot;0x55&quot;, slice)]</span>
+<span class="comment">//     a: &amp;&#39;a [u8],</span>
+<span class="comment">// }</span>
 
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "flexiber";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

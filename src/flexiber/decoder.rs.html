@@ -185,6 +185,13 @@
 <span id="182">182</span>
 <span id="183">183</span>
 <span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">TryInto</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TagLike</span>};
@@ -299,6 +306,13 @@
 
         <span class="self">self</span>.<span class="ident">position</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">position</span> <span class="op">+</span> <span class="ident">len</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">result</span>)
+    }
+
+    <span class="doccomment">/// Peek at the next byte in the decoder without modifying the cursor.</span>
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn</span> <span class="ident">peek</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">remaining</span>()
+            .<span class="ident">ok</span>()
+            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">bytes</span><span class="op">|</span> <span class="ident">bytes</span>.<span class="ident">get</span>(<span class="number">0</span>).<span class="ident">cloned</span>())
     }
 
     <span class="doccomment">/// Obtain the remaining bytes in this decoder from the current cursor</span>
