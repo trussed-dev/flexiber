@@ -42,6 +42,20 @@ where
     }
 }
 
+impl<'a, T> Decodable<'a> for Option<T>
+where
+    T: Decodable<'a> + Tagged,
+{
+    fn decode(decoder: &mut Decoder<'a>) -> Result<Option<T>> {
+        if let Some(byte) = decoder.peek() {
+            if T::tag() == Tag::try_from(byte)? {
+                return T::decode(decoder).map(Some);
+            }
+        }
+        Ok(None)
+    }
+}
+
 /// Encoding trait.
 ///
 /// Encode into encoder, which essentially is a mutable slice of bytes.
@@ -594,4 +608,19 @@ mod tests {
 
     //     assert_eq!(t, t2);
     // }
+    #[test]
+    fn derive_option() {
+        let mut buf = [0u8; 1024];
+        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+        let encoded = s.encode_to_slice(&mut buf).unwrap();
+
+        let mut decoder = crate::Decoder::new(&encoded);
+        let s: Option<S> = decoder.decode().unwrap();
+        assert!(s.is_some());
+
+        let empty = [0u8; 0];
+        let mut decoder = crate::Decoder::new(&empty);
+        let s: Option<S> = decoder.decode().unwrap();
+        assert!(s.is_none());
+    }
 }

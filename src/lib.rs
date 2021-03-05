@@ -52,3 +52,9 @@ pub use traits::{Container, Decodable, Encodable, Tagged};
 #[cfg(feature = "heapless")]
 pub use traits::EncodableHeapless;
 
+// #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
+// struct T2<'a> {
+//     #[tlv(simple = "0x55", slice)]
+//     a: &'a [u8],
+// }
+

@@ -113,6 +113,13 @@ impl<'a> Decoder<'a> {
         Ok(result)
     }
 
+    /// Peek at the next byte in the decoder without modifying the cursor.
+    pub(crate) fn peek(&self) -> Option<u8> {
+        self.remaining()
+            .ok()
+            .and_then(|bytes| bytes.get(0).cloned())
+    }
+
     /// Obtain the remaining bytes in this decoder from the current cursor
     /// position.
     fn remaining(&self) -> Result<&'a [u8]> {
