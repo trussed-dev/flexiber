@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["delog"] = [{"text":"impl&lt;'a, T:&nbsp;?Sized, U, S&gt; UpperHex for HexStr&lt;'a, T, U, S&gt; <span class=\"where fmt-newline\">where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: AsRef&lt;[u8]&gt;,<br>&nbsp;&nbsp;&nbsp;&nbsp;U: Unsigned,<br>&nbsp;&nbsp;&nbsp;&nbsp;S: Separator,&nbsp;</span>","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
