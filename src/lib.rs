@@ -23,6 +23,10 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+#[macro_use]
+extern crate delog;
+generate_macros!();
+
 #[cfg(feature = "derive")]
 pub use flexiber_derive::{Decodable, Encodable};
 

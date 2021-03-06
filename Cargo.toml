@@ -11,6 +11,7 @@ keywords = ["crypto", "no_std", "serialization"]
 readme = "README.md"
 
 [dependencies]
+delog = "0.1.0"
 flexiber_derive = { version = "0.1", optional = true, path = "derive" }
 
 [dependencies.heapless]
@@ -24,3 +25,10 @@ hex-literal = "0.3.1"
 alloc = []
 derive = ["flexiber_derive"]
 std = ["alloc"]
+
+log-all = []
+log-none = []
+log-info = []
+log-debug = []
+log-warn = []
+log-error = []

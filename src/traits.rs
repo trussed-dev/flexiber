@@ -42,12 +42,16 @@ where
     }
 }
 
+/// This implementation is quite gotcha-y, since only one byte is peeked.
+///
+/// It should evaluate to the desired tag via `Tag::try_from(byte)?`.
 impl<'a, T> Decodable<'a> for Option<T>
 where
     T: Decodable<'a> + Tagged,
 {
     fn decode(decoder: &mut Decoder<'a>) -> Result<Option<T>> {
         if let Some(byte) = decoder.peek() {
+            debug_now!("comparing {} against {} interpreted as {}", &T::tag(), byte, Tag::try_from(byte)?);
             if T::tag() == Tag::try_from(byte)? {
                 return T::decode(decoder).map(Some);
             }
@@ -269,10 +273,30 @@ impl Encodable for &[u8] {
     }
 }
 
-impl Encodable for Option<&[u8]> {
+// impl Encodable for Option<&[u8]> {
+//     fn encoded_length(&self) -> Result<Length> {
+//         match self {
+//             Some(slice) => slice.encoded_length(),
+//             None => Ok(Length::zero()),
+//         }
+//     }
+
+//     /// Encode this value as BER-TLV using the provided [`Encoder`].
+//     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
+//         match self {
+//             Some(slice) => encoder.bytes(slice),
+//             None => Ok(())
+//         }
+//     }
+// }
+
+impl<T> Encodable for Option<T>
+where
+    T: Encodable
+{
     fn encoded_length(&self) -> Result<Length> {
         match self {
-            Some(slice) => slice.encoded_length(),
+            Some(t) => t.encoded_length(),
             None => Ok(Length::zero()),
         }
     }
@@ -280,7 +304,7 @@ impl Encodable for Option<&[u8]> {
     /// Encode this value as BER-TLV using the provided [`Encoder`].
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
         match self {
-            Some(slice) => encoder.bytes(slice),
+            Some(t) => t.encode(encoder),
             None => Ok(())
         }
     }
