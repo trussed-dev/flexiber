@@ -237,6 +237,18 @@
 <span id="234">234</span>
 <span id="235">235</span>
 <span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
+<span id="248">248</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>}, <span class="ident">fmt</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TaggedValue</span>};
@@ -284,26 +296,38 @@
 
 
 <span class="kw">impl</span> <span class="ident">Tag</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BOOLEAN</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x1</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">INTEGER</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x1</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">BIT_STRING</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x3</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OCTET_STRING</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x4</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">NULL</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x5</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">OBJECT_IDENTIFIER</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x6</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UTF8_STRING</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0xC</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">PRINTABLE_STRING</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x13</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UTC_TIME</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x17</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">GENERALIZED_TIME</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x18</span>);
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SEQUENCE</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x10</span>).<span class="ident">constructed</span>();
+
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">class</span>: <span class="ident">Class</span>, <span class="ident">constructed</span>: <span class="ident">bool</span>, <span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>, <span class="ident">constructed</span>, <span class="ident">number</span> }
     }
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">universal</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">universal</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>: <span class="ident">Class</span>::<span class="ident">Universal</span>, <span class="ident">constructed</span>: <span class="bool-val">false</span>, <span class="ident">number</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">application</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">application</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>: <span class="ident">Class</span>::<span class="ident">Application</span>, <span class="ident">constructed</span>: <span class="bool-val">false</span>, <span class="ident">number</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">context</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">context</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>: <span class="ident">Class</span>::<span class="ident">Context</span>, <span class="ident">constructed</span>: <span class="bool-val">false</span>, <span class="ident">number</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">private</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">private</span>(<span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>: <span class="ident">Class</span>::<span class="ident">Private</span>, <span class="ident">constructed</span>: <span class="bool-val">false</span>, <span class="ident">number</span> }
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">constructed</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="kw">fn</span> <span class="ident">constructed</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">let</span> <span class="self">Self</span> { <span class="ident">class</span>, <span class="ident">constructed</span>: <span class="kw">_</span>, <span class="ident">number</span> } <span class="op">=</span> <span class="self">self</span>;
         <span class="self">Self</span> { <span class="ident">class</span>, <span class="ident">constructed</span>: <span class="bool-val">true</span>, <span class="ident">number</span> }
     }
