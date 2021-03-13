@@ -44,26 +44,39 @@ pub struct Tag {
 
 
 impl Tag {
+    pub const BOOLEAN: Self = Self::universal(0x1);
+    pub const INTEGER: Self = Self::universal(0x1);
+    pub const BIT_STRING: Self = Self::universal(0x3);
+    pub const OCTET_STRING: Self = Self::universal(0x4);
+    pub const NULL: Self = Self::universal(0x5);
+    pub const OBJECT_IDENTIFIER: Self = Self::universal(0x6);
+    pub const UTF8_STRING: Self = Self::universal(0xC);
+    pub const PRINTABLE_STRING: Self = Self::universal(0x13);
+    pub const UTC_TIME: Self = Self::universal(0x17);
+    pub const GENERALIZED_TIME: Self = Self::universal(0x18);
+    pub const SEQUENCE: Self = Self::universal(0x10).constructed();
+    pub const SET: Self = Self::universal(0x11).constructed();
+
     pub fn from(class: Class, constructed: bool, number: u16) -> Self {
         Self { class, constructed, number }
     }
-    pub fn universal(number: u16) -> Self {
+    pub const fn universal(number: u16) -> Self {
         Self { class: Class::Universal, constructed: false, number }
     }
 
-    pub fn application(number: u16) -> Self {
+    pub const fn application(number: u16) -> Self {
         Self { class: Class::Application, constructed: false, number }
     }
 
-    pub fn context(number: u16) -> Self {
+    pub const fn context(number: u16) -> Self {
         Self { class: Class::Context, constructed: false, number }
     }
 
-    pub fn private(number: u16) -> Self {
+    pub const fn private(number: u16) -> Self {
         Self { class: Class::Private, constructed: false, number }
     }
 
-    pub fn constructed(self) -> Self {
+    pub const fn constructed(self) -> Self {
         let Self { class, constructed: _, number } = self;
         Self { class, constructed: true, number }
     }
