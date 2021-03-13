@@ -249,6 +249,7 @@
 <span id="246">246</span>
 <span id="247">247</span>
 <span id="248">248</span>
+<span id="249">249</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">convert</span>::{<span class="ident">TryFrom</span>, <span class="ident">TryInto</span>}, <span class="ident">fmt</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">Decodable</span>, <span class="ident">Decoder</span>, <span class="ident">Encodable</span>, <span class="ident">Encoder</span>, <span class="ident">Error</span>, <span class="ident">ErrorKind</span>, <span class="ident">Length</span>, <span class="prelude-ty">Result</span>, <span class="ident">TaggedValue</span>};
@@ -307,6 +308,7 @@
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">UTC_TIME</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x17</span>);
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">GENERALIZED_TIME</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x18</span>);
     <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SEQUENCE</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x10</span>).<span class="ident">constructed</span>();
+    <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SET</span>: <span class="self">Self</span> <span class="op">=</span> <span class="self">Self</span>::<span class="ident">universal</span>(<span class="number">0x11</span>).<span class="ident">constructed</span>();
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">class</span>: <span class="ident">Class</span>, <span class="ident">constructed</span>: <span class="ident">bool</span>, <span class="ident">number</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">class</span>, <span class="ident">constructed</span>, <span class="ident">number</span> }
