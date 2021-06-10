@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["flexiber"] = [{"text":"impl AsRef&lt;[u8]&gt; for Slice&lt;'_&gt;","synthetic":false,"types":[]}];
+implementors["flexiber"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html\" title=\"trait core::convert::AsRef\">AsRef</a>&lt;[u8]&gt; for <a class=\"struct\" href=\"flexiber/struct.Slice.html\" title=\"struct flexiber::Slice\">Slice</a>&lt;'_&gt;","synthetic":false,"types":["flexiber::slice::Slice"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
