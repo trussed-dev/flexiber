@@ -77,7 +77,7 @@ pub trait Encodable {
     fn encode_to_slice<'a>(&self, buf: &'a mut [u8]) -> Result<&'a [u8]> {
         let mut encoder = Encoder::new(buf);
         self.encode(&mut encoder)?;
-        Ok(encoder.finish()?)
+        encoder.finish()
     }
 
     /// Encode this message as BER-TLV, appending it to the provided
