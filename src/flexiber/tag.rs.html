@@ -247,6 +247,8 @@
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
 <a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::{convert::{TryFrom, TryInto}, fmt};
 <span class="kw">use crate</span>::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, <span class="prelude-ty">Result</span>, TaggedValue};
 
@@ -423,7 +425,8 @@
                 encoder.byte((<span class="self">self</span>.number &amp; <span class="number">0x7F</span>) <span class="kw">as </span>u8)
             }
             <span class="number">0x4000</span>..=<span class="number">0xFFFF </span>=&gt; {
-                <span class="macro">todo!</span>();
+                <span class="comment">// todo()
+                </span><span class="kw">return </span><span class="prelude-val">Err</span>(Error::from(ErrorKind::UnsupportedTagSize));
             }
         }
     }
@@ -452,7 +455,8 @@
                     <span class="kw">if </span>third_byte &amp; NOT_LAST_TAG_OCTET_FLAG == <span class="number">0 </span>{
                         ((number <span class="kw">as </span>u16) &lt;&lt; <span class="number">7</span>) | (third_byte <span class="kw">as </span>u16)
                     } <span class="kw">else </span>{
-                        <span class="macro">todo!</span>();
+                        <span class="comment">// todo()
+                        </span><span class="kw">return </span><span class="prelude-val">Err</span>(Error::from(ErrorKind::InvalidLength));
                     }
                 }
             }
