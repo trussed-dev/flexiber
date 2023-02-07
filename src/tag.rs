@@ -174,7 +174,8 @@ impl Encodable for Tag {
                 encoder.byte((self.number & 0x7F) as u8)
             }
             0x4000..=0xFFFF => {
-                todo!();
+                // todo()
+                return Err(Error::from(ErrorKind::UnsupportedTagSize));
             }
         }
     }
@@ -203,7 +204,8 @@ impl Decodable<'_> for Tag {
                     if third_byte & NOT_LAST_TAG_OCTET_FLAG == 0 {
                         ((number as u16) << 7) | (third_byte as u16)
                     } else {
-                        todo!();
+                        // todo()
+                        return Err(Error::from(ErrorKind::InvalidLength));
                     }
                 }
             }
