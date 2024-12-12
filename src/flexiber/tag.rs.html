@@ -283,9 +283,7 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a></pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
+<a href="#285" id="285">285</a></pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, <span class="prelude-ty">Result</span>, TaggedValue,
 };
 <span class="kw">use </span>core::{
@@ -496,9 +494,7 @@
                 encoder.byte(NOT_LAST_TAG_OCTET_FLAG | (<span class="self">self</span>.number &gt;&gt; <span class="number">7</span>) <span class="kw">as </span>u8)<span class="question-mark">?</span>;
                 encoder.byte((<span class="self">self</span>.number &amp; <span class="number">0x7F</span>) <span class="kw">as </span>u8)
             }
-            <span class="number">0x4000</span>..=<span class="number">0xFFFF </span>=&gt; {
-                <span class="prelude-val">Err</span>(Error::from(ErrorKind::UnsupportedTagSize))
-            }
+            <span class="number">0x4000</span>..=<span class="number">0xFFFF </span>=&gt; <span class="prelude-val">Err</span>(Error::from(ErrorKind::UnsupportedTagSize)),
         }
     }
 }
