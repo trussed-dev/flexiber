@@ -12,11 +12,8 @@ use decodable::DeriveDecodableStruct;
 mod encodable;
 use encodable::DeriveEncodableStruct;
 
-
 use proc_macro2::TokenStream;
-use syn::{
-    Attribute, Field, Ident, Lit, Meta, MetaList, MetaNameValue, NestedMeta,
-};
+use syn::{Attribute, Field, Ident, LitStr, Token};
 use synstructure::{decl_derive, Structure};
 
 decl_derive!(
@@ -126,7 +123,7 @@ struct FieldAttrs {
     pub tag: Tag,
 
     /// Whether the `#[tlv(slice)]` attribute was set
-    pub slice: bool
+    pub slice: bool,
 }
 
 impl FieldAttrs {
@@ -150,116 +147,248 @@ fn extract_attrs_optional_tag(name: &Ident, attrs: &[Attribute]) -> (Option<Tag>
     let mut slice = false;
 
     for attr in attrs {
-        if !attr.path.is_ident("tlv") {
+        if !attr.path().is_ident("tlv") {
             continue;
         }
 
-        match attr.parse_meta().expect("error parsing `tlv` attribute") {
-            Meta::List(MetaList { nested, .. }) if !nested.is_empty() => {
-                for entry in nested {
-                    match entry {
-                        NestedMeta::Meta(Meta::Path(path)) => {
-                            if path.is_ident("slice") {
-                                slice = true;
-                            } else if path.is_ident("universal") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.class = Class::Universal;
-                                    tag.into()
-                                };
-                            } else if path.is_ident("application") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.class = Class::Application;
-                                    tag.into()
-                                };
-                            } else if path.is_ident("context") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.class = Class::Context;
-                                    tag.into()
-                                };
-                            } else if path.is_ident("private") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.class = Class::Private;
-                                    tag.into()
-                                };
-                            } else if path.is_ident("constructed") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.constructed = true;
-                                    tag.into()
-                                };
-                            } else if path.is_ident("primitive") {
-                                tag = {
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.constructed = false;
-                                    tag.into()
-                                };
-                            } else {
-                                panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
-                            }
-                        }
-                        NestedMeta::Meta(Meta::NameValue(MetaNameValue {
-                            path,
-                            lit: Lit::Str(lit_str),
-                            ..
-                        })) => {
-                            // Parse the `type = "..."` attribute
-                            if path.is_ident("number") {
-                                tag = {
-                                    let possibly_with_prefix = lit_str.value();
-                                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
-                                    let tag_number = u16::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
-                                    let mut tag = if let Tag::Ber(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.number = tag_number;
-                                    tag_number_is_set = true;
-                                    tag.into()
-                                }
-                            } else if path.is_ident("simple") {
-                                tag = {
-                                    let possibly_with_prefix = lit_str.value();
-                                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
-                                    let tag_number = u8::from_str_radix(without_prefix, 16).expect("tag values must be between one and 254");
-                                    let mut tag = if let Tag::Simple(tag) = tag {
-                                        tag
-                                    } else { Default::default() };
-                                    tag.0 = tag_number;
-                                    tag_number_is_set = true;
-                                    tag.into()
-                                };
-                            } else {
-                                panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
-                            }
-
-                        }
-                        other => panic!(
-                            "a malformed `tlv` attribute for field `{}`: {:?}",
-                            name, other
-                        ),
+        attr.parse_nested_meta(|meta| {
+            let path = meta.path;
+            if path.is_ident("slice") {
+                slice = true;
+            } else if path.is_ident("universal") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.class = Class::Universal;
+                    tag.into()
+                };
+            } else if path.is_ident("application") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.class = Class::Application;
+                    tag.into()
+                };
+            } else if path.is_ident("context") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.class = Class::Context;
+                    tag.into()
+                };
+            } else if path.is_ident("private") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.class = Class::Private;
+                    tag.into()
+                };
+            } else if path.is_ident("constructed") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.constructed = true;
+                    tag.into()
+                };
+            } else if path.is_ident("primitive") {
+                tag = {
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.constructed = false;
+                    tag.into()
+                };
+            } else if path.is_ident("number") {
+                tag = {
+                    if !meta.input.peek(Token![=]) || !meta.input.peek2(LitStr) {
+                        panic!("Malformed TLV attribute");
                     }
+                    let _: Token![=] = meta.input.parse().expect("unreachable");
+                    let lit_str: LitStr = meta.input.parse().expect("unreachable");
+
+                    let possibly_with_prefix = lit_str.value();
+                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
+                    let tag_number = u16::from_str_radix(without_prefix, 16)
+                        .expect("tag values must be between one and 254");
+                    let mut tag = if let Tag::Ber(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.number = tag_number;
+                    tag_number_is_set = true;
+                    tag.into()
                 }
+            } else if path.is_ident("simple") {
+                tag = {
+                    if !meta.input.peek(Token![=]) || !meta.input.peek2(LitStr) {
+                        panic!("Malformed TLV attribute");
+                    }
+                    let _: Token![=] = meta.input.parse().expect("unreachable");
+                    let lit_str: LitStr = meta.input.parse().expect("unreachable");
+
+                    let possibly_with_prefix = lit_str.value();
+                    let without_prefix = possibly_with_prefix.trim_start_matches("0x");
+                    let tag_number = u8::from_str_radix(without_prefix, 16)
+                        .expect("tag values must be between one and 254");
+                    let mut tag = if let Tag::Simple(tag) = tag {
+                        tag
+                    } else {
+                        Default::default()
+                    };
+                    tag.0 = tag_number;
+                    tag_number_is_set = true;
+                    tag.into()
+                };
+            } else {
+                panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
             }
-            other => panic!(
-                "malformed `tlv` attribute for field `{}`: {:#?}",
-                name, other
-            ),
-        }
+            Ok(())
+        })
+        .unwrap();
+
+        // match attr.parse_meta().expect("error parsing `tlv` attribute") {
+        //     Meta::List(MetaList { nested, .. }) if !nested.is_empty() => {
+        //         for entry in nested {
+        //             match entry {
+        //                 NestedMeta::Meta(Meta::Path(path)) => {
+        //                     if path.is_ident("slice") {
+        //                         slice = true;
+        //                     } else if path.is_ident("universal") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.class = Class::Universal;
+        //                             tag.into()
+        //                         };
+        //                     } else if path.is_ident("application") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.class = Class::Application;
+        //                             tag.into()
+        //                         };
+        //                     } else if path.is_ident("context") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.class = Class::Context;
+        //                             tag.into()
+        //                         };
+        //                     } else if path.is_ident("private") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.class = Class::Private;
+        //                             tag.into()
+        //                         };
+        //                     } else if path.is_ident("constructed") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.constructed = true;
+        //                             tag.into()
+        //                         };
+        //                     } else if path.is_ident("primitive") {
+        //                         tag = {
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.constructed = false;
+        //                             tag.into()
+        //                         };
+        //                     } else {
+        //                         panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
+        //                     }
+        //                 }
+        //                 NestedMeta::Meta(Meta::NameValue(MetaNameValue {
+        //                     path,
+        //                     lit: Lit::Str(lit_str),
+        //                     ..
+        //                 })) => {
+        //                     // Parse the `type = "..."` attribute
+        //                     if path.is_ident("number") {
+        //                         tag = {
+        //                             let possibly_with_prefix = lit_str.value();
+        //                             let without_prefix =
+        //                                 possibly_with_prefix.trim_start_matches("0x");
+        //                             let tag_number = u16::from_str_radix(without_prefix, 16)
+        //                                 .expect("tag values must be between one and 254");
+        //                             let mut tag = if let Tag::Ber(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.number = tag_number;
+        //                             tag_number_is_set = true;
+        //                             tag.into()
+        //                         }
+        //                     } else if path.is_ident("simple") {
+        //                         tag = {
+        //                             let possibly_with_prefix = lit_str.value();
+        //                             let without_prefix =
+        //                                 possibly_with_prefix.trim_start_matches("0x");
+        //                             let tag_number = u8::from_str_radix(without_prefix, 16)
+        //                                 .expect("tag values must be between one and 254");
+        //                             let mut tag = if let Tag::Simple(tag) = tag {
+        //                                 tag
+        //                             } else {
+        //                                 Default::default()
+        //                             };
+        //                             tag.0 = tag_number;
+        //                             tag_number_is_set = true;
+        //                             tag.into()
+        //                         };
+        //                     } else {
+        //                         panic!("unknown `tlv` attribute for field `{}`: {:?}", name, path);
+        //                     }
+        //                 }
+        //                 other => panic!(
+        //                     "a malformed `tlv` attribute for field `{}`: {:?}",
+        //                     name, other
+        //                 ),
+        //             }
+        //         }
+        //     }
+        //     other => panic!(
+        //         "malformed `tlv` attribute for field `{}`: {:#?}",
+        //         name, other
+        //     ),
+        // }
     }
 
     if tag_number_is_set {
