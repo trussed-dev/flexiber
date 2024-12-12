@@ -1,17 +1,15 @@
 // pub use der::{Decodable, Encodable};
 //! Trait definitions
 
+use crate::{
+    header::Header, Decoder, Encoder, Error, Length, Result, Tag, TagLike, TaggedSlice, TaggedValue,
+};
 use core::convert::{TryFrom, TryInto};
-use crate::{Decoder, Encoder, Error, header::Header, Length, Result, Tag, TaggedSlice, TaggedValue, TagLike};
 
 #[cfg(feature = "alloc")]
-use {
-    alloc::vec::Vec,
-    core::iter,
-    crate::ErrorKind,
-};
+use {alloc::vec::Vec, core::iter};
 
-#[cfg(feature = "heapless")]
+#[cfg(any(feature = "heapless", feature = "alloc"))]
 use crate::ErrorKind;
 
 /// Decoding trait.
@@ -51,7 +49,12 @@ where
 {
     fn decode(decoder: &mut Decoder<'a>) -> Result<Option<T>> {
         if let Some(byte) = decoder.peek() {
-            debug_now!("comparing {} against {} interpreted as {}", &T::tag(), byte, Tag::try_from(byte)?);
+            debug_now!(
+                "comparing {} against {} interpreted as {}",
+                &T::tag(),
+                byte,
+                Tag::try_from(byte)?
+            );
             if T::tag() == Tag::try_from(byte)? {
                 return T::decode(decoder).map(Some);
             }
@@ -115,7 +118,6 @@ pub trait Encodable {
         self.encode_to_vec(&mut buf)?;
         Ok(buf)
     }
-
 }
 
 #[cfg(feature = "heapless")]
@@ -126,11 +128,15 @@ pub trait Encodable {
 pub trait EncodableHeapless: Encodable {
     /// Encode this message as BER-TLV, appending it to the provided
     /// heapless byte vector.
-    fn encode_to_heapless_vec<const N: usize>(&self, buf: &mut heapless::Vec<u8, N>) -> Result<Length> {
+    fn encode_to_heapless_vec<const N: usize>(
+        &self,
+        buf: &mut heapless::Vec<u8, N>,
+    ) -> Result<Length> {
         let expected_len = self.encoded_length()?.to_usize();
         let current_len = buf.len();
         // TODO(nickray): add a specific error for "Overcapacity" conditional on heapless feature?
-        buf.resize_default(current_len + expected_len).map_err(|_| Error::from(ErrorKind::Overlength))?;
+        buf.resize_default(current_len + expected_len)
+            .map_err(|_| Error::from(ErrorKind::Overlength))?;
 
         let mut encoder = Encoder::new(&mut buf[current_len..]);
         self.encode(&mut encoder)?;
@@ -165,7 +171,12 @@ pub(crate) trait Taggable<T: TagLike>: Sized {
     }
 }
 
-impl<T, X> Taggable<T> for X where X: Sized, T: TagLike {}
+impl<T, X> Taggable<T> for X
+where
+    X: Sized,
+    T: TagLike,
+{
+}
 
 // /// Types with an associated BER-TLV [`Tag`].
 // pub trait Tagged {
@@ -198,7 +209,7 @@ pub trait Container {
 
 impl<TaggedContainer> Encodable for TaggedContainer
 where
-    TaggedContainer: Tagged + Container
+    TaggedContainer: Tagged + Container,
 {
     fn encoded_length(&self) -> Result<Length> {
         #[allow(clippy::redundant_closure)]
@@ -292,7 +303,7 @@ impl Encodable for &[u8] {
 
 impl<T> Encodable for Option<T>
 where
-    T: Encodable
+    T: Encodable,
 {
     fn encoded_length(&self) -> Result<Length> {
         match self {
@@ -305,7 +316,7 @@ where
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
         match self {
             Some(t) => t.encode(encoder),
-            None => Ok(())
+            None => Ok(()),
         }
     }
 }
@@ -336,18 +347,16 @@ macro_rules! impl_array {
 }
 
 impl_array!(
-    0,1,2,3,4,5,6,7,8,9,
-    10,11,12,13,14,15,16,17,18,19,
-    20,21,22,23,24,25,26,27,28,29,
-    30,31,32
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    26, 27, 28, 29, 30, 31, 32
 );
 
 #[cfg(test)]
 mod tests {
 
+    use super::{Container, Taggable, Tagged};
+    use crate::{Decodable, Encodable, Error, Result, Tag, TagLike, TaggedSlice};
     use core::convert::TryFrom;
-    use crate::{Decodable, Encodable, Error, Result, Tag, TaggedSlice, TagLike};
-    use super::{Taggable, Tagged, Container};
 
     // The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields
     // of a struct that are Decodable + Encodable. This means they can decode to/encode from
@@ -401,24 +410,24 @@ mod tests {
                 // &self.x.tagged(Tag::try_from(0x11).unwrap()),
                 &self.y.as_ref().tagged(Tag::try_from(0x02).unwrap()),
                 &self.z.as_ref().tagged(Tag::try_from(0x03).unwrap()),
-
             ])
         }
     }
 
     #[test]
     fn reconstruct() {
-        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+        let s = S {
+            x: [1, 2],
+            y: [3, 4, 5],
+            z: [6, 7, 8, 9],
+        };
         let mut buf = [0u8; 1024];
 
         let encoded = s.encode_to_slice(&mut buf).unwrap();
 
-        assert_eq!(encoded,
-            &[0x0A, 15,
-                0x01, 2, 1, 2,
-                0x02, 3, 3, 4, 5,
-                0x03, 4, 6, 7, 8, 9,
-            ],
+        assert_eq!(
+            encoded,
+            &[0x0A, 15, 0x01, 2, 1, 2, 0x02, 3, 3, 4, 5, 0x03, 4, 6, 7, 8, 9,],
         );
 
         let s2 = S::from_bytes(encoded).unwrap();
@@ -467,25 +476,27 @@ mod tests {
         }
     }
 
-
     #[test]
     fn nesty() {
-        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
-        let t = T { s, t: [0xA, 0xB, 0xC] };
+        let s = S {
+            x: [1, 2],
+            y: [3, 4, 5],
+            z: [6, 7, 8, 9],
+        };
+        let t = T {
+            s,
+            t: [0xA, 0xB, 0xC],
+        };
 
         let mut buf = [0u8; 1024];
 
         let encoded = t.encode_to_slice(&mut buf).unwrap();
 
-        assert_eq!(encoded,
-            &[0x0B, 24,
-                0x1, 17,
-                    0x0A, 15,
-                        0x01, 2, 1, 2,
-                        0x02, 3, 3, 4, 5,
-                        0x03, 4, 6, 7, 8, 9,
-                0x2, 3,
-                   0xA, 0xB, 0xC
+        assert_eq!(
+            encoded,
+            &[
+                0x0B, 24, 0x1, 17, 0x0A, 15, 0x01, 2, 1, 2, 0x02, 3, 3, 4, 5, 0x03, 4, 6, 7, 8, 9,
+                0x2, 3, 0xA, 0xB, 0xC
             ],
         );
 
@@ -535,26 +546,29 @@ mod tests {
         }
     }
 
-
     #[test]
     fn nesty2() {
-        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
-        let t = T2 { s, t: [0xA, 0xB, 0xC] };
+        let s = S {
+            x: [1, 2],
+            y: [3, 4, 5],
+            z: [6, 7, 8, 9],
+        };
+        let t = T2 {
+            s,
+            t: [0xA, 0xB, 0xC],
+        };
 
         let mut buf = [0u8; 1024];
 
         let encoded = t.encode_to_slice(&mut buf).unwrap();
 
-        assert_eq!(encoded,
+        assert_eq!(
+            encoded,
             // &[0xBB, 24,
-            &[0x0C, 22,
-                // 0x1, 17,
-                    0x0A, 15,
-                        0x01, 2, 1, 2,
-                        0x02, 3, 3, 4, 5,
-                        0x03, 4, 6, 7, 8, 9,
-                0x2, 3,
-                   0xA, 0xB, 0xC
+            &[
+                0x0C, 22, // 0x1, 17,
+                0x0A, 15, 0x01, 2, 1, 2, 0x02, 3, 3, 4, 5, 0x03, 4, 6, 7, 8, 9, 0x2, 3, 0xA, 0xB,
+                0xC
             ],
         );
 
@@ -602,7 +616,6 @@ mod tests {
     //     }
     // }
 
-
     // #[test]
     // fn nesty3() {
     //     let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
@@ -635,7 +648,11 @@ mod tests {
     #[test]
     fn derive_option() {
         let mut buf = [0u8; 1024];
-        let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+        let s = S {
+            x: [1, 2],
+            y: [3, 4, 5],
+            z: [6, 7, 8, 9],
+        };
         let encoded = s.encode_to_slice(&mut buf).unwrap();
 
         let mut decoder = crate::Decoder::new(&encoded);
