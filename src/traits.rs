@@ -1,9 +1,7 @@
 // pub use der::{Decodable, Encodable};
 //! Trait definitions
 
-use crate::{
-    header::Header, Decoder, Encoder, Error, Length, Result, Tag, TagLike, TaggedSlice, TaggedValue,
-};
+use crate::{header::Header, Decoder, Encoder, Error, Length, Result, Tag, TaggedSlice};
 use core::convert::{TryFrom, TryInto};
 
 #[cfg(feature = "alloc")]
@@ -163,20 +161,6 @@ pub trait EncodableHeapless: Encodable {
 
 #[cfg(feature = "heapless")]
 impl<X> EncodableHeapless for X where X: Encodable {}
-
-/// Types that can be tagged.
-pub(crate) trait Taggable<T: TagLike>: Sized {
-    fn tagged(&self, tag: T) -> TaggedValue<&Self, T> {
-        TaggedValue::new(tag, self)
-    }
-}
-
-impl<T, X> Taggable<T> for X
-where
-    X: Sized,
-    T: TagLike,
-{
-}
 
 // /// Types with an associated BER-TLV [`Tag`].
 // pub trait Tagged {
@@ -354,9 +338,23 @@ impl_array!(
 #[cfg(test)]
 mod tests {
 
-    use super::{Container, Taggable, Tagged};
-    use crate::{Decodable, Encodable, Error, Result, Tag, TagLike, TaggedSlice};
+    use super::{Container, Tagged};
+    use crate::{Decodable, Encodable, Error, Result, Tag, TagLike, TaggedSlice, TaggedValue};
     use core::convert::TryFrom;
+
+    /// Types that can be tagged.
+    pub(crate) trait Taggable<T: TagLike>: Sized {
+        fn tagged(&self, tag: T) -> TaggedValue<&Self, T> {
+            TaggedValue::new(tag, self)
+        }
+    }
+
+    impl<T, X> Taggable<T> for X
+    where
+        X: Sized,
+        T: TagLike,
+    {
+    }
 
     // The types [u8; 2], [u8; 3], [u8; 4] stand in here for any types for the fields
     // of a struct that are Decodable + Encodable. This means they can decode to/encode from
@@ -578,13 +576,13 @@ mod tests {
     }
 
     // no tag
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    struct T3 {
-        // no tag
-        s: S,
-        // tag 0x02
-        t: [u8; 3],
-    }
+    // #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    // struct T3 {
+    //     // no tag
+    //     s: S,
+    //     // tag 0x02
+    //     t: [u8; 3],
+    // }
 
     // impl<'a> TryFrom<TaggedSlice<'a>> for T2 {
     //     type Error = Error;
@@ -655,7 +653,7 @@ mod tests {
         };
         let encoded = s.encode_to_slice(&mut buf).unwrap();
 
-        let mut decoder = crate::Decoder::new(&encoded);
+        let mut decoder = crate::Decoder::new(encoded);
         let s: Option<S> = decoder.decode().unwrap();
         assert!(s.is_some());
 

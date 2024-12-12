@@ -209,10 +209,7 @@ impl Encodable for Tag {
                 encoder.byte(NOT_LAST_TAG_OCTET_FLAG | (self.number >> 7) as u8)?;
                 encoder.byte((self.number & 0x7F) as u8)
             }
-            0x4000..=0xFFFF => {
-                // todo()
-                return Err(Error::from(ErrorKind::UnsupportedTagSize));
-            }
+            0x4000..=0xFFFF => Err(Error::from(ErrorKind::UnsupportedTagSize)),
         }
     }
 }

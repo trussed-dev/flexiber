@@ -120,7 +120,7 @@ impl<'a> Decoder<'a> {
     pub(crate) fn peek(&self) -> Option<u8> {
         self.remaining()
             .ok()
-            .and_then(|bytes| bytes.get(0).cloned())
+            .and_then(|bytes| bytes.first().cloned())
     }
 
     /// Obtain the remaining bytes in this decoder from the current cursor

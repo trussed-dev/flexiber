@@ -38,7 +38,7 @@ impl<'a> TryFrom<&'a [&'a dyn Encodable]> for Length {
     fn try_from(encodables: &[&dyn Encodable]) -> Result<Length> {
         encodables
             .iter()
-            .fold(Ok(Length::zero()), |sum, encodable| {
+            .try_fold(Length::zero(), |sum, encodable| {
                 sum + encodable.encoded_length()?
             })
     }

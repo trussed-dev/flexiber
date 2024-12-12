@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<'a, E, T> TaggedValue<&'a E, T>
+impl<E, T> TaggedValue<&'_ E, T>
 where
     E: Encodable,
     T: Copy + Encodable,
@@ -42,7 +42,7 @@ where
     }
 }
 
-impl<'a, E, T> Encodable for TaggedValue<&'a E, T>
+impl<E, T> Encodable for TaggedValue<&E, T>
 where
     E: Encodable,
     T: Copy + Encodable,
@@ -119,7 +119,7 @@ where
     }
 }
 
-impl<'a, T> Encodable for TaggedSlice<'a, T>
+impl<T> Encodable for TaggedSlice<'_, T>
 where
     T: Copy + Encodable,
 {
