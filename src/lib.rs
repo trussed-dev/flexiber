@@ -52,13 +52,12 @@ pub use simpletag::SimpleTag;
 pub use slice::Slice;
 pub use tag::{Class, Tag, TagLike};
 pub use tagged::{TaggedSlice, TaggedValue};
-pub use traits::{Container, Decodable, Encodable, Tagged};
 #[cfg(feature = "heapless")]
 pub use traits::EncodableHeapless;
+pub use traits::{Container, Decodable, Encodable, Tagged};
 
 // #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
 // struct T2<'a> {
 //     #[tlv(simple = "0x55", slice)]
 //     a: &'a [u8],
 // }
-

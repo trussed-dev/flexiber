@@ -1,5 +1,5 @@
-use core::convert::TryInto;
 use crate::{Decodable, ErrorKind, Length, Result, TagLike};
+use core::convert::TryInto;
 
 /// BER-TLV decoder.
 #[derive(Debug)]
@@ -36,7 +36,10 @@ impl<'a> Decoder<'a> {
     }
 
     /// Decode a TaggedValue with tag checked to be as expected, returning the value
-    pub fn decode_tagged_value<T: Decodable<'a> + TagLike, V: Decodable<'a>>(&mut self, tag: T) -> Result<V> {
+    pub fn decode_tagged_value<T: Decodable<'a> + TagLike, V: Decodable<'a>>(
+        &mut self,
+        tag: T,
+    ) -> Result<V> {
         let tagged: crate::TaggedSlice<T> = self.decode()?;
         tagged.tag().assert_eq(tag)?;
         Self::new(tagged.as_bytes()).decode()

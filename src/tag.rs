@@ -1,5 +1,10 @@
-use core::{convert::{TryFrom, TryInto}, fmt};
-use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result, TaggedValue};
+use crate::{
+    Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result, TaggedValue,
+};
+use core::{
+    convert::{TryFrom, TryInto},
+    fmt,
+};
 
 const CLASS_OFFSET: usize = 6;
 const CONSTRUCTED_OFFSET: usize = 5;
@@ -42,7 +47,6 @@ pub struct Tag {
     pub number: u16,
 }
 
-
 impl Tag {
     pub const BOOLEAN: Self = Self::universal(0x1);
     pub const INTEGER: Self = Self::universal(0x1);
@@ -58,27 +62,55 @@ impl Tag {
     pub const SET: Self = Self::universal(0x11).constructed();
 
     pub fn from(class: Class, constructed: bool, number: u16) -> Self {
-        Self { class, constructed, number }
+        Self {
+            class,
+            constructed,
+            number,
+        }
     }
     pub const fn universal(number: u16) -> Self {
-        Self { class: Class::Universal, constructed: false, number }
+        Self {
+            class: Class::Universal,
+            constructed: false,
+            number,
+        }
     }
 
     pub const fn application(number: u16) -> Self {
-        Self { class: Class::Application, constructed: false, number }
+        Self {
+            class: Class::Application,
+            constructed: false,
+            number,
+        }
     }
 
     pub const fn context(number: u16) -> Self {
-        Self { class: Class::Context, constructed: false, number }
+        Self {
+            class: Class::Context,
+            constructed: false,
+            number,
+        }
     }
 
     pub const fn private(number: u16) -> Self {
-        Self { class: Class::Private, constructed: false, number }
+        Self {
+            class: Class::Private,
+            constructed: false,
+            number,
+        }
     }
 
     pub const fn constructed(self) -> Self {
-        let Self { class, constructed: _, number } = self;
-        Self { class, constructed: true, number }
+        let Self {
+            class,
+            constructed: _,
+            number,
+        } = self;
+        Self {
+            class,
+            constructed: true,
+            number,
+        }
     }
 }
 
@@ -144,7 +176,11 @@ impl fmt::Debug for Tag {
         let mut buf = [0u8; 3];
         let mut encoder = Encoder::new(&mut buf);
         encoder.encode(self).unwrap();
-        write!(f, "Tag(class = {:?}, constructed = {}, number = {})", self.class, self.constructed, self.number)
+        write!(
+            f,
+            "Tag(class = {:?}, constructed = {}, number = {})",
+            self.class, self.constructed, self.number
+        )
     }
 }
 
@@ -159,8 +195,8 @@ impl Encodable for Tag {
     }
 
     fn encode(&self, encoder: &mut Encoder<'_>) -> Result<()> {
-
-        let first_byte = ((self.class as u8) << CLASS_OFFSET) | ((self.constructed as u8) << CONSTRUCTED_OFFSET);
+        let first_byte =
+            ((self.class as u8) << CLASS_OFFSET) | ((self.constructed as u8) << CONSTRUCTED_OFFSET);
 
         match self.number {
             0..=0x1E => encoder.byte(first_byte | (self.number as u8)),
@@ -190,9 +226,7 @@ impl Decodable<'_> for Tag {
         let first_byte_masked = first_byte & ((1 << 5) - 1);
 
         let number = match first_byte_masked {
-            number @ 0..=0x1E => {
-                number as u16
-            }
+            number @ 0..=0x1E => number as u16,
             _ => {
                 let second_byte = decoder.byte()?;
                 if second_byte & NOT_LAST_TAG_OCTET_FLAG == 0 {
@@ -210,10 +244,13 @@ impl Decodable<'_> for Tag {
                 }
             }
         };
-        Ok(Self { class, constructed, number })
+        Ok(Self {
+            class,
+            constructed,
+            number,
+        })
     }
 }
-
 
 #[cfg(test)]
 mod tests {

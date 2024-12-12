@@ -1,5 +1,5 @@
+use crate::{header::Header, Encodable, ErrorKind, Length, Result, Tag};
 use core::convert::{TryFrom, TryInto};
-use crate::{Encodable, ErrorKind, header::Header, Length, Result, Tag};
 
 /// BER-TLV encoder.
 #[derive(Debug)]
@@ -58,7 +58,11 @@ impl<'a> Encoder<'a> {
     }
 
     /// Encode a collection of values which impl the [`Encodable`] trait under a given tag.
-    pub fn encode_tagged_collection(&mut self, tag: Tag, encodables: &[&dyn Encodable]) -> Result<()> {
+    pub fn encode_tagged_collection(
+        &mut self,
+        tag: Tag,
+        encodables: &[&dyn Encodable],
+    ) -> Result<()> {
         let expected_len = Length::try_from(encodables)?;
         Header::new(tag, expected_len).and_then(|header| header.encode(self))?;
 
@@ -163,7 +167,10 @@ mod tests {
 
         let tv = TaggedSlice::from(Tag::application(5).constructed(), &[]).unwrap();
         let mut buf = [0u8; 4];
-        assert_eq!(tv.encode_to_slice(&mut buf).unwrap(), &[(0b01 << 6) | (1 << 5) | 5, 0x00]);
+        assert_eq!(
+            tv.encode_to_slice(&mut buf).unwrap(),
+            &[(0b01 << 6) | (1 << 5) | 5, 0x00]
+        );
     }
 
     // use super::Encoder;

@@ -32,7 +32,10 @@ where
 
         let length = Length::decode(decoder).map_err(|e| {
             if e.kind() == ErrorKind::Overlength {
-                ErrorKind::Length { tag: tag.embedding() }.into()
+                ErrorKind::Length {
+                    tag: tag.embedding(),
+                }
+                .into()
             } else {
                 e
             }
@@ -44,7 +47,7 @@ where
 
 impl<T> Encodable for Header<T>
 where
-    T: Encodable
+    T: Encodable,
 {
     fn encoded_length(&self) -> Result<Length> {
         self.tag.encoded_length()? + self.length.encoded_length()?

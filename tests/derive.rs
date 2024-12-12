@@ -2,8 +2,8 @@
 
 #![cfg(feature = "derive")]
 
-use flexiber::{Decodable, Encodable};
 use flexiber as ber;
+use flexiber::{Decodable, Encodable};
 
 #[derive(Clone, Copy, Debug, Decodable, Encodable, Eq, PartialEq)]
 #[tlv(number = "0xAA")]
@@ -29,17 +29,18 @@ struct SApp {
 
 #[test]
 fn derived_reconstruct() {
-    let s = S { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+    let s = S {
+        x: [1, 2],
+        y: [3, 4, 5],
+        z: [6, 7, 8, 9],
+    };
     let mut buf = [0u8; 1024];
 
     let encoded = s.encode_to_slice(&mut buf).unwrap();
 
-    assert_eq!(encoded,
-        &[0x1F, 0x81, 0x2A, 17,
-            0x11,        2, 1, 2,
-            0x1F, 0x22,  3, 3, 4, 5,
-            0x1F, 0x33,  4, 6, 7, 8, 9,
-        ],
+    assert_eq!(
+        encoded,
+        &[0x1F, 0x81, 0x2A, 17, 0x11, 2, 1, 2, 0x1F, 0x22, 3, 3, 4, 5, 0x1F, 0x33, 4, 6, 7, 8, 9,],
     );
 
     let s2 = S::from_bytes(encoded).unwrap();
@@ -48,17 +49,18 @@ fn derived_reconstruct() {
 
 #[test]
 fn derived_reconstruct_application() {
-    let s = SApp { x: [1,2], y: [3,4,5], z: [6,7,8,9] };
+    let s = SApp {
+        x: [1, 2],
+        y: [3, 4, 5],
+        z: [6, 7, 8, 9],
+    };
     let mut buf = [0u8; 1024];
 
     let encoded = s.encode_to_slice(&mut buf).unwrap();
 
-    assert_eq!(encoded,
-        &[0x5F, 0x81, 0x2A, 17,
-            0x11,        2, 1, 2,
-            0x1F, 0x22,  3, 3, 4, 5,
-            0x1F, 0x33,  4, 6, 7, 8, 9,
-        ],
+    assert_eq!(
+        encoded,
+        &[0x5F, 0x81, 0x2A, 17, 0x11, 2, 1, 2, 0x1F, 0x22, 3, 3, 4, 5, 0x1F, 0x33, 4, 6, 7, 8, 9,],
     );
 
     let s2 = SApp::from_bytes(encoded).unwrap();
@@ -77,7 +79,7 @@ fn pretty_big() {
     let mut x = [0u8; 1234];
     for (i, x) in x.iter_mut().enumerate() {
         *x = i as _;
-    };
+    }
 
     let t = T { x };
 
@@ -87,11 +89,22 @@ fn pretty_big() {
     let mut buf = [0u8; 1500];
     let encoded = t.encode_to_slice(&mut buf).unwrap();
 
-    assert_eq!(&encoded[..9], [
-                    // 1234 + 5
-        0x30,    0x82, 0x04, 0xD2 + 5,
-                       // 1234
-              0x1F,     0x44, 0x82, 0x04, 0xD2]);
+    assert_eq!(
+        &encoded[..9],
+        [
+            // 1234 + 5
+            0x30,
+            0x82,
+            0x04,
+            0xD2 + 5,
+            // 1234
+            0x1F,
+            0x44,
+            0x82,
+            0x04,
+            0xD2
+        ]
+    );
     assert_eq!(&encoded[9..], x);
 
     let t2 = T::from_bytes(encoded).unwrap();
@@ -111,18 +124,25 @@ fn derive_untagged() {
     let mut x = [0u8; 1234];
     for (i, x) in x.iter_mut().enumerate() {
         *x = i as _;
-    };
+    }
 
     let t = T2 { x, a: [17u8; 5] };
 
     let mut buf = [0u8; 1500];
     let encoded = t.encode_to_slice(&mut buf).unwrap();
 
-    assert_eq!(&encoded[..5], [
-                         // 1234
-            223, 0x44, 0x82, 0x04, 0xD2]);
+    assert_eq!(
+        &encoded[..5],
+        [
+            // 1234
+            223, 0x44, 0x82, 0x04, 0xD2
+        ]
+    );
     assert_eq!(&encoded[5..(encoded.len() - 7)], x);
-    assert_eq!(&encoded[(encoded.len() - 7)..], [0x55, 5, 17, 17, 17, 17, 17]);
+    assert_eq!(
+        &encoded[(encoded.len() - 7)..],
+        [0x55, 5, 17, 17, 17, 17, 17]
+    );
 
     let t2 = T2::from_bytes(encoded).unwrap();
     assert_eq!(t, t2);
@@ -164,9 +184,17 @@ impl Decodable<'_> for PinUsagePolicy {
             global_pin: has_global_pin,
             on_card_biometric_comparison: capabilities & (1 << 4) != 0,
             has_virtual_contact_interface,
-            pairing_code_required_for_vci: if has_virtual_contact_interface { Some(capabilities & (1 << 2) != 0) } else { None },
+            pairing_code_required_for_vci: if has_virtual_contact_interface {
+                Some(capabilities & (1 << 2) != 0)
+            } else {
+                None
+            },
 
-            cardholder_prefers_global_pin: if has_global_pin { Some(raw[1] == 0x20) } else { None },
+            cardholder_prefers_global_pin: if has_global_pin {
+                Some(raw[1] == 0x20)
+            } else {
+                None
+            },
         })
     }
 }
@@ -211,7 +239,7 @@ impl Encodable for PinUsagePolicy {
 }
 
 #[derive(Decodable, Encodable)]
-#[tlv(application, constructed, number = "0x1E")]  // = 0x7E
+#[tlv(application, constructed, number = "0x1E")] // = 0x7E
 pub struct DiscoveryObject {
     #[tlv(slice, application, number = "0xF")]
     piv_card_application_aid: [u8; 11],
@@ -219,13 +247,11 @@ pub struct DiscoveryObject {
     pin_usage_policy: PinUsagePolicy,
 }
 
-
-
 impl Default for DiscoveryObject {
     fn default() -> Self {
         Self {
             piv_card_application_aid: hex_literal::hex!("A000000308 00001000 0100"),
-            pin_usage_policy: Default::default(),//[0x40, 0x00],
+            pin_usage_policy: Default::default(), //[0x40, 0x00],
         }
     }
 }
@@ -235,5 +261,8 @@ fn discovery() {
     let disco = DiscoveryObject::default();
     let mut buf = [0u8; 64];
     let encoded = disco.encode_to_slice(&mut buf).unwrap();
-    assert_eq!(encoded, hex_literal::hex!("7e124f0ba0000003080000100001005f2f024000"));
+    assert_eq!(
+        encoded,
+        hex_literal::hex!("7e124f0ba0000003080000100001005f2f024000")
+    );
 }

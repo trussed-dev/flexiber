@@ -1,5 +1,5 @@
-use core::convert::TryFrom;
 use crate::{Length, Result};
+use core::convert::TryFrom;
 
 /// Slice of at most `Length::max()` bytes.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -42,4 +42,3 @@ impl AsRef<[u8]> for Slice<'_> {
         self.as_bytes()
     }
 }
-
