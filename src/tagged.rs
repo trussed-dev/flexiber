@@ -1,17 +1,20 @@
 // //! Common handling for types backed by byte slices with enforcement of the
 // //! format-level length limitation of 65,535 bytes.
 
-use crate::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, Result, Slice, Tag, TagLike};
+use crate::{
+    header::Header, Decodable, Decoder, Encodable, Encoder, ErrorKind, Length, Result, Slice, Tag,
+    TagLike,
+};
 
 /// BER-TLV data object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct TaggedValue<V, T=Tag> {
+pub struct TaggedValue<V, T = Tag> {
     tag: T,
     value: V,
 }
 
 /// Raw BER-TLV data object `TaggedValue<Slice<'_>>`.
-pub type TaggedSlice<'a, T=Tag> = TaggedValue<Slice<'a>, T>;
+pub type TaggedSlice<'a, T = Tag> = TaggedValue<Slice<'a>, T>;
 
 impl<V, T> TaggedValue<V, T>
 where
@@ -55,9 +58,8 @@ where
 
 impl<'a, T> TaggedSlice<'a, T>
 where
-    T: Copy
+    T: Copy,
 {
-
     /// Create a new tagged slice, checking lengths.
     pub fn from(tag: T, slice: &'a [u8]) -> Result<Self> {
         Slice::new(slice)
@@ -110,14 +112,16 @@ where
         let header = Header::<T>::decode(decoder)?;
         let tag = header.tag;
         let len = header.length.to_usize();
-        let value = decoder.bytes(len).map_err(|_| ErrorKind::Length { tag: tag.embedding() })?;
+        let value = decoder.bytes(len).map_err(|_| ErrorKind::Length {
+            tag: tag.embedding(),
+        })?;
         Self::from(tag, value)
     }
 }
 
 impl<'a, T> Encodable for TaggedSlice<'a, T>
 where
-    T: Copy + Encodable
+    T: Copy + Encodable,
 {
     fn encoded_length(&self) -> Result<Length> {
         self.header()?.encoded_length()? + self.length()
@@ -146,11 +150,10 @@ where
 //         })
 // }
 
-
 #[cfg(test)]
 mod tests {
-    use core::convert::TryFrom;
     use crate::{Encodable, Tag, TaggedSlice};
+    use core::convert::TryFrom;
 
     #[test]
     fn encode() {
@@ -204,7 +207,5 @@ mod tests {
         let encoded = long.encode_to_slice(&mut buf).unwrap();
         assert_eq!(&encoded[..5], &[0xFF, 0x66, 0x82, 0x01, 0x00]);
         assert_eq!(&encoded[5..], slice);
-
     }
-
 }

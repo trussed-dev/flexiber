@@ -129,7 +129,6 @@ pub enum ErrorKind {
 
     // /// Malformed OID
     // Oid,
-
     /// Integer overflow occurred (library bug!)
     Overflow,
 
@@ -184,10 +183,8 @@ pub enum ErrorKind {
     //     /// Tag of the unexpected value
     //     tag: Tag,
     // },
-
     /// Tag does not fit in 3 bytes
     UnsupportedTagSize,
-
 }
 
 impl ErrorKind {
@@ -239,7 +236,9 @@ impl fmt::Display for ErrorKind {
             // }
             // ErrorKind::Utf8(e) => write!(f, "{}", e),
             // ErrorKind::Value { tag } => write!(f, "malformed ASN.1 DER value for {}", tag),
-            ErrorKind::UnsupportedTagSize => write!(f, "tags occupying more than 3 octets not supported"),
+            ErrorKind::UnsupportedTagSize => {
+                write!(f, "tags occupying more than 3 octets not supported")
+            }
         }
     }
 }

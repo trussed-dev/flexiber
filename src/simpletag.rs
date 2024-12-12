@@ -1,5 +1,7 @@
+use crate::{
+    Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result, Tag, TagLike,
+};
 use core::convert::TryFrom;
-use crate::{Decodable, Decoder, Encodable, Encoder, Error, ErrorKind, Length, Result, Tag, TagLike};
 
 /// These are tags like in SIMPLE-TLV.
 ///
@@ -24,7 +26,11 @@ impl TryFrom<u8> for SimpleTag {
 impl TagLike for SimpleTag {
     fn embedding(self) -> Tag {
         use crate::Class::*;
-        Tag { class: Universal, constructed: false, number: self.0 as u16 }
+        Tag {
+            class: Universal,
+            constructed: false,
+            number: self.0 as u16,
+        }
     }
 }
 
@@ -44,18 +50,17 @@ impl Encodable for SimpleTag {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use core::convert::TryFrom;
     use crate::{Encodable, SimpleTag, TaggedSlice};
+    use core::convert::TryFrom;
 
     #[test]
     fn simple_tag() {
         let mut buf = [0u8; 384];
 
         let tag = SimpleTag::try_from(37).unwrap();
-        let slice = &[1u8,2,3];
+        let slice = &[1u8, 2, 3];
         let short = TaggedSlice::from(tag, slice).unwrap();
 
         assert_eq!(
