@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/tagged.rs`."><title>tagged.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flexiber" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0 (79e9716c9 2023-11-13)" data-channel="1.74.0" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../flexiber/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/tagged.rs`."><title>tagged.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-b0742ba02757f159.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flexiber" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0 (90b35a623 2024-11-26)" data-channel="1.83.0" data-search-js="search-f0d225181b97f9a4.js" data-settings-js="settings-805db61a62df4bd2.js" ><script src="../../static.files/storage-1d39b6787ed640ff.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-f070b9041d14864c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-0111fcff984fae8f.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">flexiber/</div>tagged.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -208,20 +209,23 @@
 <a href="#208" id="208">208</a>
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
-</pre></div><pre class="rust"><code><span class="comment">// //! Common handling for types backed by byte slices with enforcement of the
+<a href="#211" id="211">211</a></pre></div><pre class="rust"><code><span class="comment">// //! Common handling for types backed by byte slices with enforcement of the
 // //! format-level length limitation of 65,535 bytes.
 
-</span><span class="kw">use crate</span>::{Decodable, Decoder, Encodable, Encoder, ErrorKind, header::Header, Length, <span class="prelude-ty">Result</span>, Slice, Tag, TagLike};
+</span><span class="kw">use crate</span>::{
+    header::Header, Decodable, Decoder, Encodable, Encoder, ErrorKind, Length, <span class="prelude-ty">Result</span>, Slice, Tag,
+    TagLike,
+};
 
 <span class="doccomment">/// BER-TLV data object.
 </span><span class="attr">#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-</span><span class="kw">pub struct </span>TaggedValue&lt;V, T=Tag&gt; {
+</span><span class="kw">pub struct </span>TaggedValue&lt;V, T = Tag&gt; {
     tag: T,
     value: V,
 }
 
-<span class="doccomment">/// Raw BER-TLV data object `TaggedValue&lt;Slice&lt;&#39;_&gt;&gt;`.
-</span><span class="kw">pub type </span>TaggedSlice&lt;<span class="lifetime">&#39;a</span>, T=Tag&gt; = TaggedValue&lt;Slice&lt;<span class="lifetime">&#39;a</span>&gt;, T&gt;;
+<span class="doccomment">/// Raw BER-TLV data object `TaggedValue&lt;Slice&lt;'_&gt;&gt;`.
+</span><span class="kw">pub type </span>TaggedSlice&lt;<span class="lifetime">'a</span>, T = Tag&gt; = TaggedValue&lt;Slice&lt;<span class="lifetime">'a</span>&gt;, T&gt;;
 
 <span class="kw">impl</span>&lt;V, T&gt; TaggedValue&lt;V, T&gt;
 <span class="kw">where
@@ -236,7 +240,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, E, T&gt; TaggedValue&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>E, T&gt;
+<span class="kw">impl</span>&lt;E, T&gt; TaggedValue&lt;<span class="kw-2">&amp;</span><span class="lifetime">'_ </span>E, T&gt;
 <span class="kw">where
     </span>E: Encodable,
     T: Copy + Encodable,
@@ -249,7 +253,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, E, T&gt; Encodable <span class="kw">for </span>TaggedValue&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>E, T&gt;
+<span class="kw">impl</span>&lt;E, T&gt; Encodable <span class="kw">for </span>TaggedValue&lt;<span class="kw-2">&amp;</span>E, T&gt;
 <span class="kw">where
     </span>E: Encodable,
     T: Copy + Encodable,
@@ -257,26 +261,25 @@
     <span class="kw">fn </span>encoded_length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Length&gt; {
         <span class="self">self</span>.header()<span class="question-mark">?</span>.encoded_length()<span class="question-mark">? </span>+ <span class="self">self</span>.value.encoded_length()<span class="question-mark">?
     </span>}
-    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, encoder: <span class="kw-2">&amp;mut </span>Encoder&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, encoder: <span class="kw-2">&amp;mut </span>Encoder&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.header()<span class="question-mark">?</span>.encode(encoder)<span class="question-mark">?</span>;
         encoder.encode(<span class="self">self</span>.value)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; TaggedSlice&lt;<span class="lifetime">&#39;a</span>, T&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; TaggedSlice&lt;<span class="lifetime">'a</span>, T&gt;
 <span class="kw">where
-    </span>T: Copy
+    </span>T: Copy,
 {
-
     <span class="doccomment">/// Create a new tagged slice, checking lengths.
-    </span><span class="kw">pub fn </span>from(tag: T, slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">pub fn </span>from(tag: T, slice: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         Slice::new(slice)
             .map(|slice| <span class="self">Self </span>{ tag, value: slice })
             .map_err(|<span class="kw">_</span>| (ErrorKind::InvalidLength).into())
     }
 
     <span class="doccomment">/// Borrow the inner byte slice.
-    </span><span class="kw">pub fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] {
+    </span><span class="kw">pub fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
         <span class="self">self</span>.value.as_bytes()
     }
 
@@ -300,11 +303,11 @@
     }
 
     <span class="doccomment">/// Decode nested values, creating a new [`Decoder`] for
-    /// the data contained in the sequence&#39;s body and passing it to the provided
+    /// the data contained in the sequence's body and passing it to the provided
     /// [`FnOnce`].
     </span><span class="kw">pub fn </span>decode_nested&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;R&gt;
     <span class="kw">where
-        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>Decoder&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;R&gt;,
+        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>Decoder&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;R&gt;,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>nested_decoder = Decoder::new(<span class="self">self</span>.as_bytes());
         <span class="kw">let </span>result = f(<span class="kw-2">&amp;mut </span>nested_decoder)<span class="question-mark">?</span>;
@@ -312,28 +315,30 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Decodable&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>TaggedSlice&lt;<span class="lifetime">&#39;a</span>, T&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; Decodable&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>TaggedSlice&lt;<span class="lifetime">'a</span>, T&gt;
 <span class="kw">where
-    </span>T: Decodable&lt;<span class="lifetime">&#39;a</span>&gt; + TagLike,
+    </span>T: Decodable&lt;<span class="lifetime">'a</span>&gt; + TagLike,
 {
-    <span class="kw">fn </span>decode(decoder: <span class="kw-2">&amp;mut </span>Decoder&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="kw">fn </span>decode(decoder: <span class="kw-2">&amp;mut </span>Decoder&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span>header = Header::&lt;T&gt;::decode(decoder)<span class="question-mark">?</span>;
         <span class="kw">let </span>tag = header.tag;
         <span class="kw">let </span>len = header.length.to_usize();
-        <span class="kw">let </span>value = decoder.bytes(len).map_err(|<span class="kw">_</span>| ErrorKind::Length { tag: tag.embedding() })<span class="question-mark">?</span>;
+        <span class="kw">let </span>value = decoder.bytes(len).map_err(|<span class="kw">_</span>| ErrorKind::Length {
+            tag: tag.embedding(),
+        })<span class="question-mark">?</span>;
         <span class="self">Self</span>::from(tag, value)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Encodable <span class="kw">for </span>TaggedSlice&lt;<span class="lifetime">&#39;a</span>, T&gt;
+<span class="kw">impl</span>&lt;T&gt; Encodable <span class="kw">for </span>TaggedSlice&lt;<span class="lifetime">'_</span>, T&gt;
 <span class="kw">where
-    </span>T: Copy + Encodable
+    </span>T: Copy + Encodable,
 {
     <span class="kw">fn </span>encoded_length(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Length&gt; {
         <span class="self">self</span>.header()<span class="question-mark">?</span>.encoded_length()<span class="question-mark">? </span>+ <span class="self">self</span>.length()
     }
 
-    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, encoder: <span class="kw-2">&amp;mut </span>Encoder&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">fn </span>encode(<span class="kw-2">&amp;</span><span class="self">self</span>, encoder: <span class="kw-2">&amp;mut </span>Encoder&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
         <span class="self">self</span>.header()<span class="question-mark">?</span>.encode(encoder)<span class="question-mark">?</span>;
         encoder.bytes(<span class="self">self</span>.as_bytes())
     }
@@ -356,11 +361,10 @@
 //         })
 // }
 
-
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>core::convert::TryFrom;
     <span class="kw">use crate</span>::{Encodable, Tag, TaggedSlice};
+    <span class="kw">use </span>core::convert::TryFrom;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>encode() {
@@ -414,8 +418,6 @@
         <span class="kw">let </span>encoded = long.encode_to_slice(<span class="kw-2">&amp;mut </span>buf).unwrap();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>encoded[..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0xFF</span>, <span class="number">0x66</span>, <span class="number">0x82</span>, <span class="number">0x01</span>, <span class="number">0x00</span>]);
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>encoded[<span class="number">5</span>..], slice);
-
     }
-
 }
 </code></pre></div></section></main></body></html>
