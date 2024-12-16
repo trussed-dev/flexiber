@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2]
+
+- Migrate to `syn` version 2: ([#7][])
+- Update dependencies to fix clippy warnings ([#7][])
+
+[#7]: https://github.com/nickray/flexiber/pull/7
+
 ## [0.1.1]
 
 - Implement `std::error::Error` for `Error` ([#3][], @gahag-cw)
@@ -19,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 
-[Unreleased]: https://github.com/nickray/flexiber/compare/0.1.1...HEAD
+[Unreleased]: https://github.com/nickray/flexiber/compare/0.1.2...HEAD
+[0.1.2]: https://github.com/nickray/flexiber/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/nickray/flexiber/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/nickray/flexiber/releases/tag/0.1.0
