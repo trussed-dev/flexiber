@@ -1,6 +1,6 @@
 [package]
 name = "flexiber_derive"
-version = "0.1.1"
+version = "0.1.3"
 authors = ["Nicolas Stalder <n@stalder.io>", "RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
 edition = "2021"
