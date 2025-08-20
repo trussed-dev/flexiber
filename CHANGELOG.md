@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0]
+
+- Update to `heapless` version 0.9.1 ([#10][])
+
+[#10]: https://github.com/nickray/flexiber/pull/10
+
 ## [0.1.2]
 
 - Migrate to `syn` version 2: ([#7][])
@@ -26,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 
 
-[Unreleased]: https://github.com/nickray/flexiber/compare/0.1.2...HEAD
+[Unreleased]: https://github.com/nickray/flexiber/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/nickray/flexiber/compare/0.1.2...0.2.0
 [0.1.2]: https://github.com/nickray/flexiber/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/nickray/flexiber/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/nickray/flexiber/releases/tag/0.1.0
