@@ -126,10 +126,7 @@ pub trait Encodable {
 pub trait EncodableHeapless: Encodable {
     /// Encode this message as BER-TLV, appending it to the provided
     /// heapless byte vector.
-    fn encode_to_heapless_vec<const N: usize>(
-        &self,
-        buf: &mut heapless::Vec<u8, N>,
-    ) -> Result<Length> {
+    fn encode_to_heapless_vec(&self, buf: &mut heapless::VecView<u8>) -> Result<Length> {
         let expected_len = self.encoded_length()?.to_usize();
         let current_len = buf.len();
         // TODO(nickray): add a specific error for "Overcapacity" conditional on heapless feature?
